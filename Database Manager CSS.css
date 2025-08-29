@@ -1,0 +1,26 @@
+section.samples {
+    margin-top: 20px;
+}
+
+section.samples .ms-Button, section.setup .ms-Button {
+    display: block;
+    margin-bottom: 0px;
+    margin-left: 20px;
+    min-width: 80px;
+}
+
+.description {
+    margin-bottom: 0px;
+    margin-left: 20px;
+    font-size: 12px;
+    color: #666;
+}
+
+/*  
+ * --오늘의 단어--
+ * 프로그래머
+ * [명사]
+ * 커피를 버추얼 스파게티로 변환하는 유기체. 
+ * 사람의 형상을 하고 있다.
+ * --G. Dave Lee--
+ */
