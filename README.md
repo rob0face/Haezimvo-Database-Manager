@@ -13,8 +13,6 @@ the Containerized Freight Solution for import/export businesses.
 
 Author:
 G. Dave Lee "rob0face"
-on behalf of
-Wincon Fright Co., Ltd. (South Korea)
 
 # 해짐보 데이터베이스 매니저
 
@@ -31,17 +29,39 @@ Wincon Fright Co., Ltd. (South Korea)
 
 개발자:
 이 건중 "rob0face"
-주식회사 윈컨프레이트의 담당자
-(대한민국)
 
 ---
 
 # License
 
+Angular
+Copyright (c) Google LLC.
+MIT License : https://mit-license.org/
+
+rxjs
+Copyright (c) Google LLC., Netflix Inc., Microsoft Corporation and contributors
+Apache 2.0 License : https://www.apache.org/licenses/LICENSE-2.0
+
+tslib
+Copyright (c) Microsoft Corporation
+0BSD License : https://opensource.org/license/0bsd
+
 office-js
 Copyright (c) Microsoft Corporation
-MIT License
+MIT License : https://mit-license.org/
+
+zone-js
+Copyright (c) Google LLC.
+MIT License : https://mit-license.org/
 
 Haezimvo Database Manager
 Copyright (c) Wincon Freight Co., Ltd.
-No License: You Have No License
+Haezimvo License : refer to LICENSE.md
+
+haezimvo.com
+Copyright (c) Wincon Freight Co., Ltd.
+Haezimvo License : refer to LICENSE.md
+
+HAEZIMVO
+Copyright (c) Wincon Freight Co., Ltd.
+Haezimvo License : refer to LICENSE.md
