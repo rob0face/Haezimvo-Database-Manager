@@ -38,11 +38,11 @@ Angular
 Copyright (c) Google LLC.
 MIT License : https://mit-license.org/
 
-rxjs
+RxJS
 Copyright (c) Google LLC., Netflix Inc., Microsoft Corporation and contributors
 Apache 2.0 License : https://www.apache.org/licenses/LICENSE-2.0
 
-tslib
+TSLib
 Copyright (c) Microsoft Corporation
 0BSD License : https://opensource.org/license/0bsd
 
