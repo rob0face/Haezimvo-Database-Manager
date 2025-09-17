@@ -30,10 +30,12 @@ async function apply() {
   await Excel.run(async (context) => {
     const applysheet = context.workbook.worksheets.getItem("반영");
     const applysheetrange = applysheet.getRange("C6:K20");
+    const portsofladingrange = applysheet.getRange("B12:B15");
     applysheetrange.load("values");
+    portsofladingrange.load("values");
 
     const settingsheet = context.workbook.worksheets.getItem("설정");
-    const usersettingrange = settingsheet.getRange("I13:I16");
+    const usersettingrange = settingsheet.getRange("H13:K16");
     usersettingrange.load("values");
 
     const datasheet = context.workbook.worksheets.getItem("데이터");
@@ -48,6 +50,7 @@ async function apply() {
 
     const username = usersettingrange.values[0][0] as string;
     const applysheetdata = applysheetrange.values;
+    const portsoflading = portsofladingrange.values.map((row) => row[0] as string);
     const logsheetdata = logsheetrange.values;
 
     // 새 데이터 작성:
@@ -59,7 +62,7 @@ async function apply() {
     // [0]날짜와 시간, [1]사용자, [2]변경 유형, [3]도착지, [4]운송사, [5]운송 단위, [6]변경한 항목, [7~11]변경 전 값, [12~16]변경 후 값, [17](선택)
     //
     // 변경한 항목의 카테고리:
-    // 유효 기간, 운임 특성, 부산발 정보, 인천발 정보, 광양발 정보, 평택-당진발 정보, 경로 정보, 메모, 프리타임, 도착지 비용1~7 (총 16개)
+    // 유효 기간, 운임 특성, 선적항1, 선적항2, 선적항3, 선적항4, 경로 정보, 메모, 프리타임, 도착지 비용1~7 (총 16개)
 
     // 도착 위치, 운송사, 운송 단위
     newdata = newdata.concat(applysheetdata[0][0], applysheetdata[0][1]);
@@ -102,7 +105,7 @@ async function apply() {
           targetdate = 28;
         }
       } else {
-        if ([1, 3, 5, 7, 8, 10, 12].indexOf(targetmonth as number) !== -1) {
+        if ([0, 2, 4, 6, 7, 9, 11].indexOf(targetmonth as number) !== -1) {
           targetdate = 31;
         } else {
           targetdate = 30;
@@ -125,11 +128,11 @@ async function apply() {
       ("0" + actualdate.getDate()).slice(-2);
     newdata = newdata.concat(stringifieddate, applysheetdata[3][2]);
 
-    // 부산발, 인천발, 광양발, 평택-당진발 운임 및 소요일 정보
-    newdata = newdata.concat(applysheetdata[6][0] as string, applysheetdata[6][1] as string, applysheetdata[6][2] as string);
-    newdata = newdata.concat(applysheetdata[7][0] as string, applysheetdata[7][1] as string, applysheetdata[7][2] as string);
-    newdata = newdata.concat(applysheetdata[8][0] as string, applysheetdata[8][1] as string, applysheetdata[8][2] as string);
-    newdata = newdata.concat(applysheetdata[9][0] as string, applysheetdata[9][1] as string, applysheetdata[9][2] as string);
+    // 운임 및 소요일 정보
+    newdata = newdata.concat(portsoflading[0], applysheetdata[6][0] as string, applysheetdata[6][1] as string, applysheetdata[6][2] as string);
+    newdata = newdata.concat(portsoflading[1], applysheetdata[7][0] as string, applysheetdata[7][1] as string, applysheetdata[7][2] as string);
+    newdata = newdata.concat(portsoflading[2], applysheetdata[8][0] as string, applysheetdata[8][1] as string, applysheetdata[8][2] as string);
+    newdata = newdata.concat(portsoflading[3], applysheetdata[9][0] as string, applysheetdata[9][1] as string, applysheetdata[9][2] as string);
 
     // 경로 정보
     newdata = newdata.concat(applysheetdata[12][0], applysheetdata[12][1], applysheetdata[12][2]);
@@ -215,7 +218,7 @@ async function apply() {
     datasheetinputindex++;
 
     // 입력
-    const datasheetinputrange = datasheet.getRange("A" + datasheetinputindex + ":BH" + datasheetinputindex);
+    const datasheetinputrange = datasheet.getRange("A" + datasheetinputindex + ":BL" + datasheetinputindex);
     datasheetinputrange.load("values");
     await context.sync();
 
@@ -272,141 +275,145 @@ async function apply() {
       if (
         datasheetinputrange.values[0][6] !== newdata[6] || 
         datasheetinputrange.values[0][7] !== newdata[7] || 
-        datasheetinputrange.values[0][8] !== newdata[8]
+        datasheetinputrange.values[0][8] !== newdata[8] ||
+        datasheetinputrange.values[0][9] !== newdata[9]
       ) {
-        newlog[6] = "부산발 정보";
+        newlog[6] = "선적항1 정보";
         newlog[7] = String(datasheetinputrange.values[0][6]);
         newlog[8] = String(datasheetinputrange.values[0][7]);
         newlog[9] = String(datasheetinputrange.values[0][8]);
-        newlog[10] = "";
+        newlog[10] = String(datasheetinputrange.values[0][9]);
         newlog[11] = "";
         newlog[12] = String(newdata[6]);
         newlog[13] = String(newdata[7]);
         newlog[14] = String(newdata[8]);
-        newlog[15] = "";
+        newlog[15] = String(newdata[9]);
         newlog[16] = "";
         logsheetdata.push([...newlog]);
       }
       if (
-        datasheetinputrange.values[0][9] !== newdata[9] || 
         datasheetinputrange.values[0][10] !== newdata[10] || 
-        datasheetinputrange.values[0][11] !== newdata[11]
+        datasheetinputrange.values[0][11] !== newdata[11] ||
+        datasheetinputrange.values[0][12] !== newdata[12] ||
+        datasheetinputrange.values[0][13] !== newdata[13]
       ) {
-        newlog[6] = "인천발 정보";
-        newlog[7] = String(datasheetinputrange.values[0][9]);
-        newlog[8] = String(datasheetinputrange.values[0][10]);
-        newlog[9] = String(datasheetinputrange.values[0][11]);
-        newlog[10] = "";
+        newlog[6] = "선적항2 정보";
+        newlog[7] = String(datasheetinputrange.values[0][10]);
+        newlog[8] = String(datasheetinputrange.values[0][11]);
+        newlog[9] = String(datasheetinputrange.values[0][12]);
+        newlog[10] = String(datasheetinputrange.values[0][13]);
         newlog[11] = "";
-        newlog[12] = String(newdata[9]);
-        newlog[13] = String(newdata[10]);
-        newlog[14] = String(newdata[11]);
-        newlog[15] = "";
+        newlog[12] = String(newdata[10]);
+        newlog[13] = String(newdata[11]);
+        newlog[14] = String(newdata[12]);
+        newlog[15] = String(newdata[13]);
         newlog[16] = "";
         logsheetdata.push([...newlog]);
       }
       if (
-        datasheetinputrange.values[0][12] !== newdata[12] || 
-        datasheetinputrange.values[0][13] !== newdata[13] || 
-        datasheetinputrange.values[0][14] !== newdata[14]
-      ) {
-        newlog[6] = "광양발 정보";
-        newlog[7] = String(datasheetinputrange.values[0][12]);
-        newlog[8] = String(datasheetinputrange.values[0][13]);
-        newlog[9] = String(datasheetinputrange.values[0][14]);
-        newlog[10] = "";
-        newlog[11] = "";
-        newlog[12] = String(newdata[12]);
-        newlog[13] = String(newdata[13]);
-        newlog[14] = String(newdata[14]);
-        newlog[15] = "";
-        newlog[16] = "";
-        logsheetdata.push([...newlog]);
-      }
-      if (
-        datasheetinputrange.values[0][15] !== newdata[15] ||
+        datasheetinputrange.values[0][14] !== newdata[14] || 
+        datasheetinputrange.values[0][15] !== newdata[15] || 
         datasheetinputrange.values[0][16] !== newdata[16] ||
         datasheetinputrange.values[0][17] !== newdata[17]
       ) {
-        newlog[6] = "평택-당진발 정보";
-        newlog[7] = String(datasheetinputrange.values[0][15]);
-        newlog[8] = String(datasheetinputrange.values[0][16]);
-        newlog[9] = String(datasheetinputrange.values[0][17]);
-        newlog[10] = "";
+        newlog[6] = "선적항3 정보";
+        newlog[7] = String(datasheetinputrange.values[0][14]);
+        newlog[8] = String(datasheetinputrange.values[0][15]);
+        newlog[9] = String(datasheetinputrange.values[0][16]);
+        newlog[10] = String(datasheetinputrange.values[0][17]);
         newlog[11] = "";
-        newlog[12] = String(newdata[15]);
-        newlog[13] = String(newdata[16]);
-        newlog[14] = String(newdata[17]);
-        newlog[15] = "";
+        newlog[12] = String(newdata[14]);
+        newlog[13] = String(newdata[15]);
+        newlog[14] = String(newdata[16]);
+        newlog[15] = String(newdata[17]);
         newlog[16] = "";
         logsheetdata.push([...newlog]);
       }
       if (
         datasheetinputrange.values[0][18] !== newdata[18] ||
         datasheetinputrange.values[0][19] !== newdata[19] ||
-        datasheetinputrange.values[0][20] !== newdata[20]
+        datasheetinputrange.values[0][20] !== newdata[20] ||
+        datasheetinputrange.values[0][21] !== newdata[21] 
       ) {
-        newlog[6] = "경로 정보";
+        newlog[6] = "선적항4 정보";
         newlog[7] = String(datasheetinputrange.values[0][18]);
         newlog[8] = String(datasheetinputrange.values[0][19]);
         newlog[9] = String(datasheetinputrange.values[0][20]);
-        newlog[10] = "";
+        newlog[10] = String(datasheetinputrange.values[0][21]);
         newlog[11] = "";
         newlog[12] = String(newdata[18]);
         newlog[13] = String(newdata[19]);
         newlog[14] = String(newdata[20]);
+        newlog[15] = String(newdata[21]);
+        newlog[16] = "";
+        logsheetdata.push([...newlog]);
+      }
+      if (
+        datasheetinputrange.values[0][22] !== newdata[22] ||
+        datasheetinputrange.values[0][23] !== newdata[23] ||
+        datasheetinputrange.values[0][24] !== newdata[24]
+      ) {
+        newlog[6] = "경로 정보";
+        newlog[7] = String(datasheetinputrange.values[0][22]);
+        newlog[8] = String(datasheetinputrange.values[0][23]);
+        newlog[9] = String(datasheetinputrange.values[0][24]);
+        newlog[10] = "";
+        newlog[11] = "";
+        newlog[12] = String(newdata[22]);
+        newlog[13] = String(newdata[23]);
+        newlog[14] = String(newdata[24]);
         newlog[15] = "";
         newlog[16] = "";
         logsheetdata.push([...newlog]);
       }
       if (
-        datasheetinputrange.values[0][21] !== newdata[21] ||
-        datasheetinputrange.values[0][22] !== newdata[22] ||
-        datasheetinputrange.values[0][23] !== newdata[23]
+        datasheetinputrange.values[0][25] !== newdata[25] ||
+        datasheetinputrange.values[0][26] !== newdata[26] ||
+        datasheetinputrange.values[0][27] !== newdata[27]
       ) {
         newlog[6] = "프리타임";
-        newlog[7] = String(datasheetinputrange.values[0][21]);
-        newlog[8] = String(datasheetinputrange.values[0][22]);
-        newlog[9] = String(datasheetinputrange.values[0][23]);
+        newlog[7] = String(datasheetinputrange.values[0][25]);
+        newlog[8] = String(datasheetinputrange.values[0][26]);
+        newlog[9] = String(datasheetinputrange.values[0][27]);
         newlog[10] = "";
         newlog[11] = "";
-        newlog[12] = String(newdata[21]);
-        newlog[13] = String(newdata[22]);
-        newlog[14] = String(newdata[23]);
+        newlog[12] = String(newdata[25]);
+        newlog[13] = String(newdata[26]);
+        newlog[14] = String(newdata[27]);
         newlog[15] = "";
         newlog[16] = "";
         logsheetdata.push([...newlog]);
       }
       for (let i = 1; i <= 7; i++) {
         if (
-          datasheetinputrange.values[0][24 + ((i - 1) * 5)] !== newdata[24 + ((i - 1) * 5)] ||
-          datasheetinputrange.values[0][25 + ((i - 1) * 5)] !== newdata[25 + ((i - 1) * 5)] ||
-          datasheetinputrange.values[0][26 + ((i - 1) * 5)] !== newdata[26 + ((i - 1) * 5)] ||
-          datasheetinputrange.values[0][27 + ((i - 1) * 5)] !== newdata[27 + ((i - 1) * 5)] ||
-          datasheetinputrange.values[0][28 + ((i - 1) * 5)] !== newdata[28 + ((i - 1) * 5)]
+          datasheetinputrange.values[0][28 + ((i - 1) * 5)] !== newdata[28 + ((i - 1) * 5)] ||
+          datasheetinputrange.values[0][29 + ((i - 1) * 5)] !== newdata[29 + ((i - 1) * 5)] ||
+          datasheetinputrange.values[0][30 + ((i - 1) * 5)] !== newdata[30 + ((i - 1) * 5)] ||
+          datasheetinputrange.values[0][31 + ((i - 1) * 5)] !== newdata[31 + ((i - 1) * 5)] ||
+          datasheetinputrange.values[0][32 + ((i - 1) * 5)] !== newdata[32 + ((i - 1) * 5)]
         ) {
           newlog[6] = "도착지 비용" + i;
-          newlog[7] = String(datasheetinputrange.values[0][24 + ((i - 1) * 5)]);
-          newlog[8] = String(datasheetinputrange.values[0][25 + ((i - 1) * 5)]);
-          newlog[9] = String(datasheetinputrange.values[0][26 + ((i - 1) * 5)]);
-          newlog[10] = String(datasheetinputrange.values[0][27 + ((i - 1) * 5)]);
-          newlog[11] = String(datasheetinputrange.values[0][28 + ((i - 1) * 5)]);
-          newlog[12] = String(newdata[24 + ((i - 1) * 5)]);
-          newlog[13] = String(newdata[25 + ((i - 1) * 5)]);
-          newlog[14] = String(newdata[26 + ((i - 1) * 5)]);
-          newlog[15] = String(newdata[27 + ((i - 1) * 5)]);
-          newlog[16] = String(newdata[28 + ((i - 1) * 5)]);
+          newlog[7] = String(datasheetinputrange.values[0][28 + ((i - 1) * 5)]);
+          newlog[8] = String(datasheetinputrange.values[0][29 + ((i - 1) * 5)]);
+          newlog[9] = String(datasheetinputrange.values[0][30 + ((i - 1) * 5)]);
+          newlog[10] = String(datasheetinputrange.values[0][31 + ((i - 1) * 5)]);
+          newlog[11] = String(datasheetinputrange.values[0][32 + ((i - 1) * 5)]);
+          newlog[12] = String(newdata[28 + ((i - 1) * 5)]);
+          newlog[13] = String(newdata[29 + ((i - 1) * 5)]);
+          newlog[14] = String(newdata[30 + ((i - 1) * 5)]);
+          newlog[15] = String(newdata[31 + ((i - 1) * 5)]);
+          newlog[16] = String(newdata[32 + ((i - 1) * 5)]);
           logsheetdata.push([...newlog]);
         }
       }
-      if (datasheetinputrange.values[0][59] !== newdata[59]) {
+      if (datasheetinputrange.values[0][63] !== newdata[63]) {
         newlog[6] = "메모";
-        newlog[7] = String(datasheetinputrange.values[0][59]);
+        newlog[7] = String(datasheetinputrange.values[0][63]);
         newlog[8] = "";
         newlog[9] = "";
         newlog[10] = "";
         newlog[11] = "";
-        newlog[12] = String(newdata[59]);
+        newlog[12] = String(newdata[63]);
         newlog[13] = "";
         newlog[14] = "";
         newlog[15] = "";
@@ -431,9 +438,11 @@ async function bring() {
   await Excel.run(async (context) => {
     const applysheet = context.workbook.worksheets.getItem("반영");
     const applysheetrange = applysheet.getRange("C6:K20");
+    const portsofladingrange = applysheet.getRange("B12:B15");
     const applysheetformularange1 = applysheet.getRange("G6:J6");
     const applysheetformularange2 = applysheet.getRange("C11:D11");
     applysheetrange.load("values");
+    portsofladingrange.load("values");
     applysheetformularange1.load("formulas");
     applysheetformularange2.load("formulas");
 
@@ -444,6 +453,7 @@ async function bring() {
     await context.sync();
 
     const applysheetdata = applysheetrange.values;
+    const portsoflading = portsofladingrange.values;
     const applysheetformula1 = applysheetformularange1.formulas;
     const applysheetformula2 = applysheetformularange2.formulas;
 
@@ -459,7 +469,7 @@ async function bring() {
     }
     datasheetindex++;
 
-    const datasheetrange = datasheet.getRange("A" + datasheetindex + ":BH" + datasheetindex);
+    const datasheetrange = datasheet.getRange("A" + datasheetindex + ":BL" + datasheetindex);
     datasheetrange.load("values");
     await context.sync();
     const datasheetdata = (datasheetrange.values)[0];
@@ -467,82 +477,77 @@ async function bring() {
     if (datasheetdata[0] as string === "") {
       applysheetdata[3][2] = "신규";
     } else {
-      // 도착 위치, 운송사, 운송 단위
-      /** 필요 없음
-      applysheetdata[0][0] = datasheetdata[0] as string;
-      applysheetdata[0][1] = datasheetdata[1] as string;
-      if (datasheetdata[2] as string === "LCL") {
-        applysheetdata[0][2] = true;
-      } else {
-        applysheetdata[0][2] = false;
-      }
-      */
       // 유효 기간 부터, 까지, 운임 특성
       applysheetdata[3][0] = datasheetdata[3] as string;
       applysheetdata[3][1] = datasheetdata[4] as string;
       applysheetdata[3][2] = datasheetdata[5] as string;
       // 부산발, 인천발, 광양발, 평택-당진발 운임 및 소요일 정보
-      applysheetdata[6][0] = datasheetdata[6] as string;
-      applysheetdata[6][1] = datasheetdata[7] as string;
-      applysheetdata[6][2] = datasheetdata[8] as string;
-      applysheetdata[7][0] = datasheetdata[9] as string;
-      applysheetdata[7][1] = datasheetdata[10] as string;
-      applysheetdata[7][2] = datasheetdata[11] as string;
-      applysheetdata[8][0] = datasheetdata[12] as string;
-      applysheetdata[8][1] = datasheetdata[13] as string;
-      applysheetdata[8][2] = datasheetdata[14] as string;
-      applysheetdata[9][0] = datasheetdata[15] as string;
-      applysheetdata[9][1] = datasheetdata[16] as string;
-      applysheetdata[9][2] = datasheetdata[17] as string;
+      portsoflading[0][0] = datasheetdata[6] as string;
+      applysheetdata[6][0] = datasheetdata[7] as string;
+      applysheetdata[6][1] = datasheetdata[8] as string;
+      applysheetdata[6][2] = datasheetdata[9] as string;
+      portsoflading[1][0] = datasheetdata[10] as string;
+      applysheetdata[7][0] = datasheetdata[11] as string;
+      applysheetdata[7][1] = datasheetdata[12] as string;
+      applysheetdata[7][2] = datasheetdata[13] as string;
+      portsoflading[2][0] = datasheetdata[14] as string;
+      applysheetdata[8][0] = datasheetdata[15] as string;
+      applysheetdata[8][1] = datasheetdata[16] as string;
+      applysheetdata[8][2] = datasheetdata[17] as string;
+      portsoflading[3][0] = datasheetdata[18] as string;
+      applysheetdata[9][0] = datasheetdata[19] as string;
+      applysheetdata[9][1] = datasheetdata[20] as string;
+      applysheetdata[9][2] = datasheetdata[21] as string;
       // 경로 정보
-      applysheetdata[12][0] = datasheetdata[18] as string;
-      applysheetdata[12][1] = datasheetdata[19] as string;
-      applysheetdata[12][2] = datasheetdata[20] as string;
+      applysheetdata[12][0] = datasheetdata[22] as string;
+      applysheetdata[12][1] = datasheetdata[23] as string;
+      applysheetdata[12][2] = datasheetdata[24] as string;
       // 도착 위치 프리타임
-      applysheetdata[3][4] = datasheetdata[21] as string;
-      applysheetdata[3][5] = datasheetdata[22] as string;
-      applysheetdata[3][6] = datasheetdata[23] as string;
+      applysheetdata[3][4] = datasheetdata[25] as string;
+      applysheetdata[3][5] = datasheetdata[26] as string;
+      applysheetdata[3][6] = datasheetdata[27] as string;
       // 도착지 비용 1~7
-      applysheetdata[6][4] = datasheetdata[24] as boolean;
-      applysheetdata[6][5] = datasheetdata[25] as string;
-      applysheetdata[6][6] = datasheetdata[26] as string;
-      applysheetdata[6][7] = datasheetdata[27] as string;
-      applysheetdata[6][8] = datasheetdata[28] as number;
-      applysheetdata[7][4] = datasheetdata[29] as boolean;
-      applysheetdata[7][5] = datasheetdata[30] as string;
-      applysheetdata[7][6] = datasheetdata[31] as string;
-      applysheetdata[7][7] = datasheetdata[32] as string;
-      applysheetdata[7][8] = datasheetdata[33] as number;
-      applysheetdata[8][4] = datasheetdata[34] as boolean;
-      applysheetdata[8][5] = datasheetdata[35] as string;
-      applysheetdata[8][6] = datasheetdata[36] as string;
-      applysheetdata[8][7] = datasheetdata[37] as string;
-      applysheetdata[8][8] = datasheetdata[38] as number;
-      applysheetdata[9][4] = datasheetdata[39] as boolean;
-      applysheetdata[9][5] = datasheetdata[40] as string;
-      applysheetdata[9][6] = datasheetdata[41] as string;
-      applysheetdata[9][7] = datasheetdata[42] as string;
-      applysheetdata[9][8] = datasheetdata[43] as number;
-      applysheetdata[10][4] = datasheetdata[44] as boolean;
-      applysheetdata[10][5] = datasheetdata[45] as string;
-      applysheetdata[10][6] = datasheetdata[46] as string;
-      applysheetdata[10][7] = datasheetdata[47] as string;
-      applysheetdata[10][8] = datasheetdata[48] as number;
-      applysheetdata[11][4] = datasheetdata[49] as boolean;
-      applysheetdata[11][5] = datasheetdata[50] as string;
-      applysheetdata[11][6] = datasheetdata[51] as string;
-      applysheetdata[11][7] = datasheetdata[52] as string;
-      applysheetdata[11][8] = datasheetdata[53] as number;
-      applysheetdata[12][4] = datasheetdata[54] as boolean;
-      applysheetdata[12][5] = datasheetdata[55] as string;
-      applysheetdata[12][6] = datasheetdata[56] as string;
-      applysheetdata[12][7] = datasheetdata[57] as string;
-      applysheetdata[12][8] = datasheetdata[58] as number;
+      applysheetdata[6][4] = datasheetdata[28] as boolean;
+      applysheetdata[6][5] = datasheetdata[29] as string;
+      applysheetdata[6][6] = datasheetdata[30] as string;
+      applysheetdata[6][7] = datasheetdata[31] as string;
+      applysheetdata[6][8] = datasheetdata[32] as number;
+      applysheetdata[7][4] = datasheetdata[33] as boolean;
+      applysheetdata[7][5] = datasheetdata[34] as string;
+      applysheetdata[7][6] = datasheetdata[35] as string;
+      applysheetdata[7][7] = datasheetdata[36] as string;
+      applysheetdata[7][8] = datasheetdata[37] as number;
+      applysheetdata[8][4] = datasheetdata[38] as boolean;
+      applysheetdata[8][5] = datasheetdata[39] as string;
+      applysheetdata[8][6] = datasheetdata[40] as string;
+      applysheetdata[8][7] = datasheetdata[41] as string;
+      applysheetdata[8][8] = datasheetdata[42] as number;
+      applysheetdata[9][4] = datasheetdata[43] as boolean;
+      applysheetdata[9][5] = datasheetdata[44] as string;
+      applysheetdata[9][6] = datasheetdata[45] as string;
+      applysheetdata[9][7] = datasheetdata[46] as string;
+      applysheetdata[9][8] = datasheetdata[47] as number;
+      applysheetdata[10][4] = datasheetdata[48] as boolean;
+      applysheetdata[10][5] = datasheetdata[49] as string;
+      applysheetdata[10][6] = datasheetdata[50] as string;
+      applysheetdata[10][7] = datasheetdata[51] as string;
+      applysheetdata[10][8] = datasheetdata[52] as number;
+      applysheetdata[11][4] = datasheetdata[53] as boolean;
+      applysheetdata[11][5] = datasheetdata[54] as string;
+      applysheetdata[11][6] = datasheetdata[55] as string;
+      applysheetdata[11][7] = datasheetdata[56] as string;
+      applysheetdata[11][8] = datasheetdata[57] as number;
+      applysheetdata[12][4] = datasheetdata[58] as boolean;
+      applysheetdata[12][5] = datasheetdata[59] as string;
+      applysheetdata[12][6] = datasheetdata[60] as string;
+      applysheetdata[12][7] = datasheetdata[61] as string;
+      applysheetdata[12][8] = datasheetdata[62] as number;
       // 메모
-      applysheetdata[14][0] = datasheetdata[59] as string;
+      applysheetdata[14][0] = datasheetdata[63] as string;
     }
 
     applysheetrange.values = applysheetdata;
+    portsofladingrange.values = portsoflading;
 
     // 수식 덮어쓰기
     applysheetformularange1.formulas = applysheetformula1;
@@ -554,7 +559,7 @@ async function bring() {
 async function combine() {
   await Excel.run(async (context) => {
     const settingsheet = context.workbook.worksheets.getItem("설정");
-    const usersettingrange = settingsheet.getRange("I13:I16");
+    const usersettingrange = settingsheet.getRange("H13:K16");
     usersettingrange.load("values");
 
     const datasheet = context.workbook.worksheets.getItem("데이터");
@@ -658,141 +663,145 @@ async function combine() {
         if (
           datasheetdata[pushindex][6] !== singlepusheddata[6] ||
           datasheetdata[pushindex][7] !== singlepusheddata[7] ||
-          datasheetdata[pushindex][8] !== singlepusheddata[8]
+          datasheetdata[pushindex][8] !== singlepusheddata[8] ||
+          datasheetdata[pushindex][9] !== singlepusheddata[9]
         ) {
-          newlog[6] = "부산발 정보";
+          newlog[6] = "선적항1 정보";
           newlog[7] = String(datasheetdata[pushindex][6]);
           newlog[8] = String(datasheetdata[pushindex][7]);
           newlog[9] = String(datasheetdata[pushindex][8]);
-          newlog[10] = "";
+          newlog[10] = String(datasheetdata[pushindex][9]);
           newlog[11] = "";
           newlog[12] = String(singlepusheddata[6]);
           newlog[13] = String(singlepusheddata[7]);
           newlog[14] = String(singlepusheddata[8]);
-          newlog[15] = "";
+          newlog[15] = String(singlepusheddata[9]);
           newlog[16] = "";
           logsheetdata.push([...newlog]);
         }
         if (
-          datasheetdata[pushindex][9] !== singlepusheddata[9] ||
           datasheetdata[pushindex][10] !== singlepusheddata[10] ||
-          datasheetdata[pushindex][11] !== singlepusheddata[11]
-        ) {
-          newlog[6] = "인천발 정보";
-          newlog[7] = String(datasheetdata[pushindex][9]);
-          newlog[8] = String(datasheetdata[pushindex][10]);
-          newlog[9] = String(datasheetdata[pushindex][11]);
-          newlog[10] = "";
-          newlog[11] = "";
-          newlog[12] = String(singlepusheddata[9]);
-          newlog[13] = String(singlepusheddata[10]);
-          newlog[14] = String(singlepusheddata[11]);
-          newlog[15] = "";
-          newlog[16] = "";
-          logsheetdata.push([...newlog]);
-        }
-        if (
+          datasheetdata[pushindex][11] !== singlepusheddata[11] ||
           datasheetdata[pushindex][12] !== singlepusheddata[12] ||
-          datasheetdata[pushindex][13] !== singlepusheddata[13] ||
-          datasheetdata[pushindex][14] !== singlepusheddata[14]
+          datasheetdata[pushindex][13] !== singlepusheddata[13]
         ) {
-          newlog[6] = "광양발 정보";
-          newlog[7] = String(datasheetdata[pushindex][12]);
-          newlog[8] = String(datasheetdata[pushindex][13]);
-          newlog[9] = String(datasheetdata[pushindex][14]);
-          newlog[10] = "";
+          newlog[6] = "선적항2 정보";
+          newlog[7] = String(datasheetdata[pushindex][10]);
+          newlog[8] = String(datasheetdata[pushindex][11]);
+          newlog[9] = String(datasheetdata[pushindex][12]);
+          newlog[10] = String(datasheetdata[pushindex][13]);
           newlog[11] = "";
-          newlog[12] = String(singlepusheddata[12]);
-          newlog[13] = String(singlepusheddata[13]);
-          newlog[14] = String(singlepusheddata[14]);
-          newlog[15] = "";
+          newlog[12] = String(singlepusheddata[10]);
+          newlog[13] = String(singlepusheddata[11]);
+          newlog[14] = String(singlepusheddata[12]);
+          newlog[15] = String(singlepusheddata[13]);
           newlog[16] = "";
           logsheetdata.push([...newlog]);
         }
         if (
+          datasheetdata[pushindex][14] !== singlepusheddata[14] ||
           datasheetdata[pushindex][15] !== singlepusheddata[15] ||
           datasheetdata[pushindex][16] !== singlepusheddata[16] ||
           datasheetdata[pushindex][17] !== singlepusheddata[17]
         ) {
-          newlog[6] = "평택-당진발 정보";
-          newlog[7] = String(datasheetdata[pushindex][15]);
-          newlog[8] = String(datasheetdata[pushindex][16]);
-          newlog[9] = String(datasheetdata[pushindex][17]);
-          newlog[10] = "";
+          newlog[6] = "선적항3 정보";
+          newlog[7] = String(datasheetdata[pushindex][14]);
+          newlog[8] = String(datasheetdata[pushindex][15]);
+          newlog[9] = String(datasheetdata[pushindex][16]);
+          newlog[10] = String(datasheetdata[pushindex][17]);
           newlog[11] = "";
-          newlog[12] = String(singlepusheddata[15]);
-          newlog[13] = String(singlepusheddata[16]);
-          newlog[14] = String(singlepusheddata[17]);
-          newlog[15] = "";
+          newlog[12] = String(singlepusheddata[14]);
+          newlog[13] = String(singlepusheddata[15]);
+          newlog[14] = String(singlepusheddata[16]);
+          newlog[15] = String(singlepusheddata[17]);
           newlog[16] = "";
           logsheetdata.push([...newlog]);
         }
         if (
           datasheetdata[pushindex][18] !== singlepusheddata[18] ||
           datasheetdata[pushindex][19] !== singlepusheddata[19] ||
-          datasheetdata[pushindex][20] !== singlepusheddata[20]
+          datasheetdata[pushindex][20] !== singlepusheddata[20] ||
+          datasheetdata[pushindex][21] !== singlepusheddata[21] 
         ) {
-          newlog[6] = "경로 정보";
+          newlog[6] = "선적항4 정보";
           newlog[7] = String(datasheetdata[pushindex][18]);
           newlog[8] = String(datasheetdata[pushindex][19]);
           newlog[9] = String(datasheetdata[pushindex][20]);
-          newlog[10] = "";
+          newlog[10] = String(datasheetdata[pushindex][21]);
           newlog[11] = "";
           newlog[12] = String(singlepusheddata[18]);
           newlog[13] = String(singlepusheddata[19]);
           newlog[14] = String(singlepusheddata[20]);
+          newlog[15] = String(singlepusheddata[21]);
+          newlog[16] = "";
+          logsheetdata.push([...newlog]);
+        }
+        if (
+          datasheetdata[pushindex][22] !== singlepusheddata[22] ||
+          datasheetdata[pushindex][23] !== singlepusheddata[23] ||
+          datasheetdata[pushindex][24] !== singlepusheddata[24]
+        ) {
+          newlog[6] = "경로 정보";
+          newlog[7] = String(datasheetdata[pushindex][22]);
+          newlog[8] = String(datasheetdata[pushindex][23]);
+          newlog[9] = String(datasheetdata[pushindex][24]);
+          newlog[10] = "";
+          newlog[11] = "";
+          newlog[12] = String(singlepusheddata[22]);
+          newlog[13] = String(singlepusheddata[23]);
+          newlog[14] = String(singlepusheddata[24]);
           newlog[15] = "";
           newlog[16] = "";
           logsheetdata.push([...newlog]);
         }
         if (
-          datasheetdata[pushindex][21] !== singlepusheddata[21] ||
-          datasheetdata[pushindex][22] !== singlepusheddata[22] ||
-          datasheetdata[pushindex][23] !== singlepusheddata[23]
+          datasheetdata[pushindex][25] !== singlepusheddata[25] ||
+          datasheetdata[pushindex][26] !== singlepusheddata[26] ||
+          datasheetdata[pushindex][27] !== singlepusheddata[27]
         ) {
           newlog[6] = "프리타임";
-          newlog[7] = String(datasheetdata[pushindex][21]);
-          newlog[8] = String(datasheetdata[pushindex][22]);
-          newlog[9] = String(datasheetdata[pushindex][23]);
+          newlog[7] = String(datasheetdata[pushindex][25]);
+          newlog[8] = String(datasheetdata[pushindex][26]);
+          newlog[9] = String(datasheetdata[pushindex][27]);
           newlog[10] = "";
           newlog[11] = "";
-          newlog[12] = String(singlepusheddata[21]);
-          newlog[13] = String(singlepusheddata[22]);
-          newlog[14] = String(singlepusheddata[23]);
+          newlog[12] = String(singlepusheddata[25]);
+          newlog[13] = String(singlepusheddata[26]);
+          newlog[14] = String(singlepusheddata[27]);
           newlog[15] = "";
           newlog[16] = "";
           logsheetdata.push([...newlog]);
         }
         for (let ii = 1; ii <= 7; ii++) {
           if (
-            datasheetdata[pushindex][24 + ((ii - 1) * 5)] !== singlepusheddata[24 + ((ii - 1) * 5)] ||
-            datasheetdata[pushindex][25 + ((ii - 1) * 5)] !== singlepusheddata[25 + ((ii - 1) * 5)] ||
-            datasheetdata[pushindex][26 + ((ii - 1) * 5)] !== singlepusheddata[26 + ((ii - 1) * 5)] ||
-            datasheetdata[pushindex][27 + ((ii - 1) * 5)] !== singlepusheddata[27 + ((ii - 1) * 5)] ||
-            datasheetdata[pushindex][28 + ((ii - 1) * 5)] !== singlepusheddata[28 + ((ii - 1) * 5)]
+            datasheetdata[pushindex][28 + ((ii - 1) * 5)] !== singlepusheddata[28 + ((ii - 1) * 5)] ||
+            datasheetdata[pushindex][29 + ((ii - 1) * 5)] !== singlepusheddata[29 + ((ii - 1) * 5)] ||
+            datasheetdata[pushindex][30 + ((ii - 1) * 5)] !== singlepusheddata[30 + ((ii - 1) * 5)] ||
+            datasheetdata[pushindex][31 + ((ii - 1) * 5)] !== singlepusheddata[31 + ((ii - 1) * 5)] ||
+            datasheetdata[pushindex][32 + ((ii - 1) * 5)] !== singlepusheddata[32 + ((ii - 1) * 5)]
           ) {
             newlog[6] = "도착지 비용" + ii;
-            newlog[7] = String(datasheetdata[pushindex][24 + ((ii - 1) * 5)]);
-            newlog[8] = String(datasheetdata[pushindex][25 + ((ii - 1) * 5)]);
-            newlog[9] = String(datasheetdata[pushindex][26 + ((ii - 1) * 5)]);
-            newlog[10] = String(datasheetdata[pushindex][27 + ((ii - 1) * 5)]);
-            newlog[11] = String(datasheetdata[pushindex][28 + ((ii - 1) * 5)]);
-            newlog[12] = String(singlepusheddata[24 + ((ii - 1) * 5)]);
-            newlog[13] = String(singlepusheddata[25 + ((ii - 1) * 5)]);
-            newlog[14] = String(singlepusheddata[26 + ((ii - 1) * 5)]);
-            newlog[15] = String(singlepusheddata[27 + ((ii - 1) * 5)]);
-            newlog[16] = String(singlepusheddata[28 + ((ii - 1) * 5)]);
+            newlog[7] = String(datasheetdata[pushindex][28 + ((ii - 1) * 5)]);
+            newlog[8] = String(datasheetdata[pushindex][29 + ((ii - 1) * 5)]);
+            newlog[9] = String(datasheetdata[pushindex][30 + ((ii - 1) * 5)]);
+            newlog[10] = String(datasheetdata[pushindex][31 + ((ii - 1) * 5)]);
+            newlog[11] = String(datasheetdata[pushindex][32 + ((ii - 1) * 5)]);
+            newlog[12] = String(singlepusheddata[28 + ((ii - 1) * 5)]);
+            newlog[13] = String(singlepusheddata[29 + ((ii - 1) * 5)]);
+            newlog[14] = String(singlepusheddata[30 + ((ii - 1) * 5)]);
+            newlog[15] = String(singlepusheddata[31 + ((ii - 1) * 5)]);
+            newlog[16] = String(singlepusheddata[32 + ((ii - 1) * 5)]);
             logsheetdata.push([...newlog]);
           }
         }
-        if (datasheetdata[pushindex][59] !== singlepusheddata[59]) {
+        if (datasheetdata[pushindex][63] !== singlepusheddata[63]) {
           newlog[6] = "메모";
-          newlog[7] = String(datasheetdata[pushindex][59]);
+          newlog[7] = String(datasheetdata[pushindex][63]);
           newlog[8] = "";
           newlog[9] = "";
           newlog[10] = "";
           newlog[11] = "";
-          newlog[12] = String(singlepusheddata[59]);
+          newlog[12] = String(singlepusheddata[63]);
           newlog[13] = "";
           newlog[14] = "";
           newlog[15] = "";
@@ -803,7 +812,7 @@ async function combine() {
       datasheetdata[pushindex] = singlepusheddata;
     }
 
-    const datasheetnewrange = datasheet.getRange("A1:BH" + datasheetdata.length);
+    const datasheetnewrange = datasheet.getRange("A1:BL" + datasheetdata.length);
     datasheetnewrange.load("values");
 
     const logsheetnewrange = context.workbook.worksheets.getItem("로그").getRange("A1:R" + logsheetdata.length);
@@ -858,11 +867,6 @@ async function deliver() {
     // [18, 19, 20, 21]도착지비용1{항목, 단위, 화폐, 금액} ~ [42, 43, 44, 45]도착지비용7
 
     let singledata: (string | number | boolean)[] = [];
-    // singledata 구조: [0]도착 위치, [1]운송사, [2]운송 단위, [3]유효기간 시작, [4]유효기간 종료, [5]운임 특성,
-    // [6, 7, 8]부산발 정보{운임1, 운임2, 소요일}, [9, 10, 11]인천발 정보, [12, 13, 14]광양발 정보, [15, 16, 17]평택-당진발 정보,
-    // [18]환적항1, [19]환적항2, [20]모선, [21]프리타임, [22]프리타임 제공 방법, [23]프리타임 제공 만료,
-    // [24, 25, 26, 27, 28]도착지비용1{운임포함여부, 항목, 단위, 화폐, 금액} ~ [54, 55, 56, 57, 58]도착지비용7,
-    // [59]메모
 
     for (let i = 2; i < datasheetdata.length; i++) {
       singledata = datasheetdata[i];
@@ -870,10 +874,10 @@ async function deliver() {
       // 기준운임1 설정
       let data_absoluteof1 = 0;
       let data_of1 = [
-        String(singledata[6]),
-        String(singledata[9]),
-        String(singledata[12]),
-        String(singledata[15])
+        String(singledata[7]),
+        String(singledata[11]),
+        String(singledata[15]),
+        String(singledata[19])
       ];
       data_of1 = data_of1.filter((item) => item !== "");
       if (data_of1.length > 1 && data_of1.filter((item) => item.includes("+")).length === data_of1.length - 1) {
@@ -885,10 +889,10 @@ async function deliver() {
       // 기준운임2 설정
       let data_absoluteof2 = 0;
       let data_of2 = [
-        String(singledata[7]),
-        String(singledata[10]),
-        String(singledata[13]),
-        String(singledata[16])
+        String(singledata[8]),
+        String(singledata[12]),
+        String(singledata[16]),
+        String(singledata[20])
       ];
       data_of2 = data_of2.filter((item) => item !== "");
       if (data_of2.length > 1 && data_of2.filter((item) => item.includes("+")).length === data_of2.length - 1) {
@@ -900,10 +904,10 @@ async function deliver() {
       // 기준소요일 설정
       let data_absolutett = "0";
       let data_tt = [
-        String(singledata[8]),
-        String(singledata[11]),
-        String(singledata[14]),
-        String(singledata[17])
+        String(singledata[9]),
+        String(singledata[13]),
+        String(singledata[17]),
+        String(singledata[21])
       ];
       data_tt = data_tt.filter((item) => item !== "");
       if (data_tt.length > 1 && data_tt.filter((item) => item.includes("+")).length === data_tt.length - 1) {
@@ -933,15 +937,15 @@ async function deliver() {
         locationlist[data_podindex][1] as string,
         locationlist[data_podindex][3] as string,
         singledata[0] as string,
-        (singledata[18] as string) !== "" ? "환적" : "직항",
-        singledata[18] as string,
-        singledata[19] as string,
+        (singledata[22] as string) !== "" ? "환적" : "직항",
+        singledata[22] as string,
+        singledata[23] as string,
         singledata[2] as string,
         "운송 소요일",
         singledata[3] as string,
         singledata[4] as string,
         "20피트 운임", "40피트 하이큐브 운임", "LCL 운임",
-        ((singledata[21] as string) !== "" && (new Date(singledata[23] as string) > new Date())) ? singledata[21] as string : "견적 시 문의",
+        ((singledata[25] as string) !== "" && (new Date(singledata[27] as string) > new Date())) ? singledata[25] as string : "견적 시 문의",
         ((locationlist[data_podindex][1] as string) === "미국" || (locationlist[data_podindex][1] as string) === "캐나다") ? 1 : 0
       ];
 
@@ -951,7 +955,7 @@ async function deliver() {
       let data_addedsurcharge_40hc = 0;
       let data_addedsurcharge_lcl = 0;
       let e = 18;
-      for (let ii of [24, 29, 34, 39, 44, 49, 54]) {
+      for (let ii of [28, 33, 38, 43, 48, 53, 58]) {
         // 운임에 포함할 도착지 비용을 변수에 더하고 0으로 만듦
         if (singledata[ii] as boolean) {
           if (singledata[ii + 3] as string !== "USD") {
@@ -990,22 +994,22 @@ async function deliver() {
       }
 
       // 출발지, 운송 소요일, 운임 작성
-      const pollist = [
-        ["부산", "BUSAN"],
-        ["인천", "INCHEON"],
-        ["광양", "GWANGYANG"],
-        ["평택-당진", "PYEONGTAEK"],
-      ];
-      e = 6;
-      for (let ii = 0; ii < pollist.length; ii++) {
+      e = 7;
+      for (let ii = 0; ii < 4; ii++) {
         // 운임이 없으면 건너뜀
         if (singledata[e] as string === "" && singledata[e + 1] as string === "") {
-          e += 3;
+          e += 4;
           continue;
         }
         // 출발지
-        singleitem[1] = pollist[ii][0] as string;
-        singleitem[2] = pollist[ii][1] as string;
+        singleitem[2] = singledata[e - 1] as string;
+        if (locationlist.map((row) => row[4] as string).indexOf(singleitem[2] as string) === -1) {
+          console.log((i + 1) + "행 출발지 오류: " + singleitem[2] + "는(은) 유효한 출발지가 아닙니다.");
+          singleitem[1] = singleitem[2];
+          break;
+        } else {
+          singleitem[1] = locationlist[locationlist.map((row) => row[4] as string).indexOf(singleitem[2] as string)][3] as string;
+        }
         // 운송 소요일
         let data_tt_formatted = "";
           // 운송 소요일이 절대값이 아닌 경우
@@ -1106,7 +1110,7 @@ async function deliver() {
         }
 
         deliversheetdata.push([...singleitem]);
-        e += 3;
+        e += 4;
       }
     }
 
@@ -1144,10 +1148,12 @@ async function deliver() {
 async function explore() {
   await Excel.run(async (context) => {
     const settingsheet = context.workbook.worksheets.getItem("설정");
-    const searchsettingsrange = settingsheet.getRange("C6:H9");
+    const searchsettingsrange = settingsheet.getRange("C5:I9");
     const marginsettingsrange = settingsheet.getRange("C14:D16");
+    const sortsettingsrange = settingsheet.getRange("D20:K20");
     searchsettingsrange.load("values");
     marginsettingsrange.load("values");
+    sortsettingsrange.load("values");
 
     const datasheet = context.workbook.worksheets.getItem("데이터");
     const datasheetrange = datasheet.getUsedRange();
@@ -1175,48 +1181,54 @@ async function explore() {
 
     const searchsetting = searchsettingsrange.values;
     let marginsetting = marginsettingsrange.values;
+    const sortsetting = sortsettingsrange.values[0];
     const datasheetvalues = datasheetrange.values;
     const exchangeratelist = exchangeratesheetrange.values.slice(1, undefined);
     const locationlist = locationsheetrange.values;
     const filterlist = filtersheetrange.values;
-    const resultdata = resultdataheaderrange.values;
+    const resultdataheader = resultdataheaderrange.values;
+    let resultdata: (string | number | boolean)[][] = [];
 
     let searchsettings = {
       // 검색 조건
-      from : searchsetting[0][0] as string,
+      from : searchsetting[1][0] as string,
       fromtype : (
-        searchsetting[0][0] as string === "All" ? "all" :
-        searchsetting[0][1] as boolean ? "filter" :
-        searchsetting[0][2] as boolean ? "country" :
-        searchsetting[0][3] as boolean ? "region" :
-        "location"
-      ),
-      to : searchsetting[1][0] as string,
-      totype : (
         searchsetting[1][0] as string === "All" ? "all" :
         searchsetting[1][1] as boolean ? "filter" :
         searchsetting[1][2] as boolean ? "country" :
         searchsetting[1][3] as boolean ? "region" :
         "location"
       ),
-      carrier : searchsetting[2][0] as string,
-      carriertype : (
+      to : searchsetting[2][0] as string,
+      totype : (
         searchsetting[2][0] as string === "All" ? "all" :
         searchsetting[2][1] as boolean ? "filter" :
+        searchsetting[2][2] as boolean ? "country" :
+        searchsetting[2][3] as boolean ? "region" :
+        "location"
+      ),
+      carrier : searchsetting[3][0] as string,
+      carriertype : (
+        searchsetting[3][0] as string === "All" ? "all" :
+        searchsetting[3][1] as boolean ? "filter" :
         "specific"
       ),
       volumetype : (
-        searchsetting[3][0] as string === "LCL" ? "LCL" :
-        searchsetting[3][0] as string === "All" ? "all" :
+        searchsetting[4][0] as string === "LCL" ? "LCL" :
+        searchsetting[4][0] as string === "All" ? "all" :
         "FCL"
       ),
-      containtransshippingroute : searchsetting[3][2] as boolean,
-      containexpiredfare : searchsetting[3][3] as boolean,
+      containtransshippingroute : searchsetting[4][2] as boolean,
+      containexpiredfare : searchsetting[4][3] as boolean,
       // 옵션
       addmargin : searchsetting[0][4] as boolean,
       expiredfareonly : searchsetting[1][4] as boolean,
       expiredfreetimeonly : searchsetting[2][4] as boolean,
-      conditionzero : searchsetting[3][4] as boolean
+      conditionzero : searchsetting[3][4] as boolean,
+      filterbyofferinglevel :
+        searchsetting[4][4] as boolean === false ? "every" :
+        searchsetting[4][6].substring(0, 1) === "!" ? "except" : "only",
+      offeringlevel : (searchsetting[4][6] as string).replace("!", "").trim()
     };
     if (searchsettings.conditionzero) {
       searchsettings.fromtype = "all";
@@ -1314,21 +1326,16 @@ async function explore() {
     // searchresult 구조: [0]출발 위치, [1]환적항1, [2]환적항2, [3]도착 위치, [4]소요일, [5]운송사, [6]운임, [7]유효기간 종료
 
     let singledata: (string | number | boolean)[] = [];
-    // singledata 구조: [0]도착 위치, [1]운송사, [2]운송 단위, [3]유효기간 시작, [4]유효기간 종료, [5]운임 특성,
-    // [6, 7, 8]부산발 정보{운임1, 운임2, 소요일}, [9, 10, 11]인천발 정보, [12, 13, 14]광양발 정보, [15, 16, 17]평택-당진발 정보,
-    // [18]환적항1, [19]환적항2, [20]모선, [21]프리타임, [22]프리타임 제공 방법, [23]프리타임 제공 만료,
-    // [24, 25, 26, 27, 28]도착지비용1{운임포함여부, 항목, 단위, 화폐, 금액} ~ [54, 55, 56, 57, 58]도착지비용7,
-    // [59]메모
 
     for (let i = 2; i < datasheetvalues.length; i++) {
       singledata = datasheetvalues[i];
       if (
         // 출발지 확인
         (
-          (searchfor.from.indexOf("BUSAN") !== -1 && (String(singledata[6]) !== "" || String(singledata[7]) !== "")) ||
-          (searchfor.from.indexOf("INCHEON") !== -1 && (String(singledata[9]) !== "" || String(singledata[10]) !== "")) ||
-          (searchfor.from.indexOf("GWANGYANG") !== -1 && (String(singledata[12]) !== "" || String(singledata[13]) !== "")) ||
-          (searchfor.from.indexOf("PYEONGTAEK") !== -1 && (String(singledata[15]) !== "" || String(singledata[16]) !== "")) ||
+          (searchfor.from.indexOf(String(singledata[6])) !== -1 && (String(singledata[7]) !== "" || String(singledata[8]) !== "")) ||
+          (searchfor.from.indexOf(String(singledata[10])) !== -1 && (String(singledata[11]) !== "" || String(singledata[12]) !== "")) ||
+          (searchfor.from.indexOf(String(singledata[14])) !== -1 && (String(singledata[15]) !== "" || String(singledata[16]) !== "")) ||
+          (searchfor.from.indexOf(String(singledata[18])) !== -1 && (String(singledata[19]) !== "" || String(singledata[20]) !== "")) ||
           searchsettings.fromtype === "all"
         ) &&
         // 도착지 확인
@@ -1338,21 +1345,26 @@ async function explore() {
         // 운송 단위 확인
         (singledata[2] as string === searchsettings.volumetype || searchsettings.volumetype === "all") &&
         // 환적 경로 확인
-        (singledata[18] as string === "" || searchsettings.containtransshippingroute) &&
+        (singledata[22] as string === "" || searchsettings.containtransshippingroute) &&
         // 만료 데이터 확인
         (new Date(singledata[4] as string) >= new Date() || searchsettings.containexpiredfare || searchsettings.expiredfareonly) &&
         // 운임 만료 데이터만 표시 옵션일 경우 만료 데이터만 포함
         (!searchsettings.expiredfareonly || new Date(singledata[4] as string) < new Date()) &&
         // 프리타임 만료 데이터만 표시 옵션일 경우 만료 데이터만 포함
-        (!searchsettings.expiredfreetimeonly || new Date(singledata[23] as string) < new Date())
+        (!searchsettings.expiredfreetimeonly || new Date(singledata[27] as string) < new Date()) &&
+        // 운임 특성 필터
+        (searchsettings.filterbyofferinglevel === "every" ||
+          (searchsettings.filterbyofferinglevel === "only" && String(singledata[5]).includes(searchsettings.offeringlevel)) ||
+          (searchsettings.filterbyofferinglevel === "except" && !String(singledata[5]).includes(searchsettings.offeringlevel))
+        )
       ) {
         // 기준운임1 설정
         let data_absoluteof1 = 0;
         let data_of1 = [
-          String(singledata[6]),
-          String(singledata[9]),
-          String(singledata[12]),
-          String(singledata[15])
+          String(singledata[7]),
+          String(singledata[11]),
+          String(singledata[15]),
+          String(singledata[19])
         ];
         data_of1 = data_of1.filter((item) => item !== "");
         if (data_of1.length > 1 && data_of1.filter((item) => item.includes("+")).length === data_of1.length - 1) {
@@ -1364,10 +1376,10 @@ async function explore() {
         // 기준운임2 설정
         let data_absoluteof2 = 0;
         let data_of2 = [
-          String(singledata[7]),
-          String(singledata[10]),
-          String(singledata[13]),
-          String(singledata[16])
+          String(singledata[8]),
+          String(singledata[12]),
+          String(singledata[16]),
+          String(singledata[20])
         ];
         data_of2 = data_of2.filter((item) => item !== "");
         if (data_of2.length > 1 && data_of2.filter((item) => item.includes("+")).length === data_of2.length - 1) {
@@ -1379,10 +1391,10 @@ async function explore() {
         // 기준소요일 설정
         let data_absolutett = "0";
         let data_tt = [
-          String(singledata[8]),
-          String(singledata[11]),
-          String(singledata[14]),
-          String(singledata[17])
+          String(singledata[9]),
+          String(singledata[13]),
+          String(singledata[17]),
+          String(singledata[21])
         ];
         data_tt = data_tt.filter((item) => item !== "");
         if (data_tt.length > 1 && data_tt.filter((item) => item.includes("+")).length === data_tt.length - 1) {
@@ -1396,7 +1408,7 @@ async function explore() {
         let data_addedsurcharge_20std = 0;
         let data_addedsurcharge_40hc = 0;
         let data_addedsurcharge_lcl = 0;
-        for (let ii of [24, 29, 34, 39, 44, 49, 54]) {
+        for (let ii of [28, 33, 38, 43, 48, 53, 58]) {
           // 운임에 포함할 도착지 비용을 변수에 더함
           if (singledata[ii] as boolean) {
             if (singledata[ii + 3] as string !== "USD") {
@@ -1430,8 +1442,8 @@ async function explore() {
 
         // 검색 결과에 추가
         // 환적항
-        searchresult[1] = singledata[18];
-        searchresult[2] = singledata[19];
+        searchresult[1] = singledata[22];
+        searchresult[2] = singledata[23];
         // 도착 위치 (한글로 변환)
         searchresult[3] = singledata[0];
         locationindex = locationlist.map((row) => row[4] as string).indexOf(singledata[0] as string);
@@ -1443,475 +1455,209 @@ async function explore() {
         // 유효기간 종료
         searchresult[7] = singledata[4];
 
-        // 부산이 출발지 검색 조건에 포함되고 운임이 존재하는 경우 부산발 정보를 검색 결과에 추가 (출발 위치, 소요일, 운임)
-        if (
-          (searchfor.from.indexOf("BUSAN") !== -1 || searchsettings.fromtype === "all") &&
-          (String(singledata[6]) !== "" || String(singledata[7]) !== "")
-        ) {
-          // 출발 위치
-          searchresult[0] = "부산";
-          // 운송 소요일
-          let data_tt_formatted = "";
-          // 운송 소요일이 절대값이 아닌 경우
-          if (String(singledata[8]).includes("+")) {
-            // 기준 소요일이 범위로 지정된 경우
-            if (String(data_absolutett).includes("~")) {
-              let data_tt_range = data_absolutett.split("~").map((item) => item.trim());
-              data_tt_formatted = (
-                (Number(data_tt_range[0]) + Number(String(singledata[8]).replace("+", ""))) +
-                "~" +
-                (Number(data_tt_range[1]) + Number(String(singledata[8]).replace("+", "")))
-              );
-            // 기준 소요일이 범위로 지정되지 않은 경우
+        // 선적항이 출발지 검색 조건에 포함되고 운임이 존재하는 경우 해당 선적항 정보를 검색 결과에 추가 (출발 위치, 소요일, 운임)
+        for (let e of [6, 10, 14, 18]) {
+          if (
+            (searchfor.from.indexOf(String(singledata[e])) !== -1 || searchsettings.fromtype === "all") &&
+            (String(singledata[e + 1]) !== "" || String(singledata[e + 2]) !== "")
+          ) {
+            // 출발 위치
+            searchresult[0] = singledata[e] as string;
+            // 운송 소요일
+            let data_tt_formatted = "";
+            // 운송 소요일이 절대값이 아닌 경우
+            if (String(singledata[e + 3]).includes("+")) {
+              // 기준 소요일이 범위로 지정된 경우
+              if (String(data_absolutett).includes("~")) {
+                let data_tt_range = data_absolutett.split("~").map((item) => item.trim());
+                data_tt_formatted = (
+                  (Number(data_tt_range[0]) + Number(String(singledata[e + 3]).replace("+", ""))) +
+                  "~" +
+                  (Number(data_tt_range[1]) + Number(String(singledata[e + 3]).replace("+", "")))
+                );
+              // 기준 소요일이 범위로 지정되지 않은 경우
+              } else {
+                data_tt_formatted = (
+                  String(Number(data_absolutett) + Number(String(singledata[e + 3]).replace("+", "")))
+                );
+              }
+              // 운송 소요일이 절대값인 경우
+            } else if ((singledata[e + 3] as string) !== "") {
+              data_tt_formatted = singledata[e + 3] as string;
+              // 운송 소요일이 없는 경우
             } else {
-              data_tt_formatted = (
-                String(Number(data_absolutett) + Number(String(singledata[8]).replace("+", "")))
-              );
+              data_tt_formatted = "견적 시 문의";
             }
-            // 운송 소요일이 절대값인 경우
-          } else if ((singledata[8] as string) !== "") {
-            data_tt_formatted = singledata[8] as string;
-            // 운송 소요일이 없는 경우
-          } else {
-            data_tt_formatted = "견적 시 문의";
-          }
-          searchresult[4] = data_tt_formatted;
-          
-          // 운임
-          let data_fare_formatted = "";
-          let data_fare = 0;
-            // FCL 운임
-          if (singledata[2] === "FCL") {
-            // 20피트
-            if (String(singledata[6]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[6]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_20std;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
-                Number(data_fare) + marginsetting[0][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            } else if (Number(singledata[6] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[6]) + data_addedsurcharge_20std;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
-                Number(data_fare) + marginsetting[0][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-              // 운임이 없는 경우
-            } else {
-              data_fare = 0;
-              data_fare_formatted = "- "
-            }
-            data_fare_formatted = data_fare_formatted + " | ";
-            // 40피트 하이큐브
-            if (String(singledata[7]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[7]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof2 + data_addedsurcharge_40hc;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
-                Number(data_fare) + marginsetting[1][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = data_fare_formatted + String(data_fare);
-            } else if (Number(singledata[7] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[7]) + data_addedsurcharge_40hc;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
-                Number(data_fare) + marginsetting[1][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = data_fare_formatted + String(data_fare);
-              // 운임이 없는 경우
-            } else {
-              data_fare = 0;
-              data_fare_formatted = data_fare_formatted + " -";
-            }
-            // LCL 운임
-          } else {
-            if (String(singledata[6]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[6]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_lcl;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
-                Number(data_fare) + marginsetting[2][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            } else if (Number(singledata[6] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[6]) + data_addedsurcharge_lcl;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
-                Number(data_fare) + marginsetting[2][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            }
-          }
-          searchresult[6] = data_fare_formatted;
-          resultdata.push([...searchresult]);
-        }
+            searchresult[4] = data_tt_formatted;
+            
+            // 운임
+            let data_fare_formatted = "";
+            let data_fare = 0;
+            searchresult[8] = 0;
+              // FCL 운임
+            if (singledata[2] === "FCL") {
+              // 20피트
+              if (String(singledata[e + 1]).includes("+")) {
+                // 운임이 절대값이 아닌 경우
+                data_fare = Number(String(singledata[e + 1]).replace("+", ""));
+                data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_20std;
+                data_fare = Math.max(
+                  Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
+                  Number(data_fare) + marginsetting[0][1] as number
+                );
+                data_fare = Math.ceil(Number(data_fare) / 10) * 10;
+                data_fare_formatted = String(data_fare);
+              } else if (Number(singledata[e + 1] as string) !== 0) {
+                // 운임이 절대값인 경우
+                data_fare = Number(singledata[e + 1]) + data_addedsurcharge_20std;
+                data_fare = Math.max(
+                  Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
+                  Number(data_fare) + marginsetting[0][1] as number
+                );
+                data_fare = Math.ceil(Number(data_fare) / 10) * 10;
+                data_fare_formatted = String(data_fare);
+                // 운임이 없는 경우
+              } else {
+                data_fare = 0;
+                data_fare_formatted = "- "
+              }
+              if (sortsetting[7] === true || (sortsetting[7] === false && data_fare === 0)) {
+                searchresult[8] = 31416; // 임시로 매우 큰 수를 넣음 (운임이 없는 경우 맨 뒤로 정렬하기 위함)
+              } else {
+                searchresult[8] = data_fare; // 20피트 운임으로 정렬하도록 설정했고 20피트 운임이 있다면 이 운임을 임시로 저장
+              }
 
-        // 인천이 출발지 검색 조건에 포함되고 운임이 존재하는 경우 인천발 정보를 검색 결과에 추가 (출발 위치, 소요일, 운임)
-        if (
-          (searchfor.from.indexOf("INCHEON") !== -1 || searchsettings.fromtype === "all") &&
-          (String(singledata[9]) !== "" || String(singledata[10]) !== "")
-        ) {
-          // 출발 위치
-          searchresult[0] = "인천";
-          // 운송 소요일
-          let data_tt_formatted = "";
-          // 운송 소요일이 절대값이 아닌 경우
-          if (String(singledata[11]).includes("+")) {
-            // 기준 소요일이 범위로 지정된 경우
-            if (String(data_absolutett).includes("~")) {
-              let data_tt_range = data_absolutett.split("~").map((item) => item.trim());
-              data_tt_formatted = (
-                (Number(data_tt_range[0]) + Number(String(singledata[11]).replace("+", ""))) +
-                "~" +
-                (Number(data_tt_range[1]) + Number(String(singledata[11]).replace("+", "")))
-              );
-            // 기준 소요일이 범위로 지정되지 않은 경우
-            } else {
-              data_tt_formatted = (
-                String(Number(data_absolutett) + Number(String(singledata[11]).replace("+", "")))
-              );
-            }
-            // 운송 소요일이 절대값인 경우
-          } else if ((singledata[11] as string) !== "") {
-            data_tt_formatted = singledata[11] as string;
-            // 운송 소요일이 없는 경우
-          } else {
-            data_tt_formatted = "견적 시 문의";
-          }
-          searchresult[4] = data_tt_formatted;
-          
-          // 운임
-          let data_fare_formatted = "";
-          let data_fare = 0;
-            // FCL 운임
-          if (singledata[2] === "FCL") {
-            // 20피트
-            if (String(singledata[9]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[9]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_20std;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
-                Number(data_fare) + marginsetting[0][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            } else if (Number(singledata[9] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[9]) + data_addedsurcharge_20std;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
-                Number(data_fare) + marginsetting[0][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-              // 운임이 없는 경우
-            } else {
-              data_fare = 0;
-              data_fare_formatted = "- "
-            }
-            data_fare_formatted = data_fare_formatted + " | ";
-            // 40피트 하이큐브
-            if (String(singledata[10]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[10]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof2 + data_addedsurcharge_40hc;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
-                Number(data_fare) + marginsetting[1][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = data_fare_formatted + String(data_fare);
-            } else if (Number(singledata[10] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[10]) + data_addedsurcharge_40hc;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
-                Number(data_fare) + marginsetting[1][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = data_fare_formatted + String(data_fare);
-              // 운임이 없는 경우
-            } else {
-              data_fare = 0;
-              data_fare_formatted = data_fare_formatted + " -";
-            }
-            // LCL 운임
-          } else {
-            if (String(singledata[9]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[9]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_lcl;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
-                Number(data_fare) + marginsetting[2][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            } else if (Number(singledata[9] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[9]) + data_addedsurcharge_lcl;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
-                Number(data_fare) + marginsetting[2][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            }
-          }
-          searchresult[6] = data_fare_formatted;
-          resultdata.push([...searchresult]);
-        }
+              data_fare_formatted = data_fare_formatted + " | ";
 
-        // 광양이 출발지 검색 조건에 포함되고 운임이 존재하는 경우 광양발 정보를 검색 결과에 추가 (출발 위치, 소요일, 운임)
-        if (
-          (searchfor.from.indexOf("GWANGYANG") !== -1 || searchsettings.fromtype === "all") &&
-          (String(singledata[12]) !== "" || String(singledata[13]) !== "")
-        ) {
-          // 출발 위치
-          searchresult[0] = "광양";
-          // 운송 소요일
-          let data_tt_formatted = "";
-          // 운송 소요일이 절대값이 아닌 경우
-          if (String(singledata[14]).includes("+")) {
-            // 기준 소요일이 범위로 지정된 경우
-            if (String(data_absolutett).includes("~")) {
-              let data_tt_range = data_absolutett.split("~").map((item) => item.trim());
-              data_tt_formatted = (
-                (Number(data_tt_range[0]) + Number(String(singledata[14]).replace("+", ""))) +
-                "~" +
-                (Number(data_tt_range[1]) + Number(String(singledata[14]).replace("+", "")))
-              );
-            // 기준 소요일이 범위로 지정되지 않은 경우
-            } else {
-              data_tt_formatted = (
-                String(Number(data_absolutett) + Number(String(singledata[14]).replace("+", "")))
-              );
-            }
-            // 운송 소요일이 절대값인 경우
-          } else if ((singledata[14] as string) !== "") {
-            data_tt_formatted = singledata[14] as string;
-            // 운송 소요일이 없는 경우
-          } else {
-            data_tt_formatted = "견적 시 문의";
-          }
-          searchresult[4] = data_tt_formatted;
-          
-          // 운임
-          let data_fare_formatted = "";
-          let data_fare = 0;
-            // FCL 운임
-          if (singledata[2] === "FCL") {
-            // 20피트
-            if (String(singledata[12]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[12]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_20std;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
-                Number(data_fare) + marginsetting[0][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            } else if (Number(singledata[12] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[12]) + data_addedsurcharge_20std;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
-                Number(data_fare) + marginsetting[0][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-              // 운임이 없는 경우
-            } else {
-              data_fare = 0;
-              data_fare_formatted = "- "
-            }
-            data_fare_formatted = data_fare_formatted + " | ";
-            // 40피트 하이큐브
-            if (String(singledata[13]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[13]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof2 + data_addedsurcharge_40hc;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
-                Number(data_fare) + marginsetting[1][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = data_fare_formatted + String(data_fare);
-            } else if (Number(singledata[13] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[13]) + data_addedsurcharge_40hc;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
-                Number(data_fare) + marginsetting[1][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = data_fare_formatted + String(data_fare);
-              // 운임이 없는 경우
-            } else {
-              data_fare = 0;
-              data_fare_formatted = data_fare_formatted + " -";
-            }
-            // LCL 운임
-          } else {
-            if (String(singledata[12]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[12]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_lcl;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
-                Number(data_fare) + marginsetting[2][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            } else if (Number(singledata[12] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[12]) + data_addedsurcharge_lcl;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
-                Number(data_fare) + marginsetting[2][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            }
-          }
-          searchresult[6] = data_fare_formatted;
-          resultdata.push([...searchresult]);
-        }
+              // 40피트 하이큐브
+              if (String(singledata[e + 2]).includes("+")) {
+                // 운임이 절대값이 아닌 경우
+                data_fare = Number(String(singledata[e + 2]).replace("+", ""));
+                data_fare = Number(data_fare) + data_absoluteof2 + data_addedsurcharge_40hc;
+                data_fare = Math.max(
+                  Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
+                  Number(data_fare) + marginsetting[1][1] as number
+                );
+                data_fare = Math.ceil(Number(data_fare) / 10) * 10;
+                data_fare_formatted = data_fare_formatted + String(data_fare);
+              } else if (Number(singledata[e + 2] as string) !== 0) {
+                // 운임이 절대값인 경우
+                data_fare = Number(singledata[e + 2]) + data_addedsurcharge_40hc;
+                data_fare = Math.max(
+                  Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
+                  Number(data_fare) + marginsetting[1][1] as number
+                );
+                data_fare = Math.ceil(Number(data_fare) / 10) * 10;
+                data_fare_formatted = data_fare_formatted + String(data_fare);
+                // 운임이 없는 경우
+              } else {
+                data_fare = 0;
+                data_fare_formatted = data_fare_formatted + " -";
+              }
+              if (sortsetting[7] === false || (sortsetting[7] === true && data_fare === 0)) {
+                searchresult[8] = 31416; // 임시로 매우 큰 수를 넣음 (운임이 없는 경우 맨 뒤로 정렬하기 위함)
+              } else {
+                searchresult[8] = data_fare; // 40피트 하이큐브 운임으로 정렬하도록 설정했고 40피트 하이큐브 운임이 있다면 이 운임을 임시로 저장
+              }
 
-        // 평택-당진이 출발지 검색 조건에 포함되고 운임이 존재하는 경우 평택-당진발 정보를 검색 결과에 추가 (출발 위치, 소요일, 운임)
-        if (
-          (searchfor.from.indexOf("PYEONGTAEK") !== -1 || searchsettings.fromtype === "all") &&
-          (String(singledata[15]) !== "" || String(singledata[16]) !== "")
-        ) {
-          // 출발 위치
-          searchresult[0] = "평택-당진";
-          // 운송 소요일
-          let data_tt_formatted = "";
-          // 운송 소요일이 절대값이 아닌 경우
-          if (String(singledata[17]).includes("+")) {
-            // 기준 소요일이 범위로 지정된 경우
-            if (String(data_absolutett).includes("~")) {
-              let data_tt_range = data_absolutett.split("~").map((item) => item.trim());
-              data_tt_formatted = (
-                (Number(data_tt_range[0]) + Number(String(singledata[17]).replace("+", ""))) +
-                "~" +
-                (Number(data_tt_range[1]) + Number(String(singledata[17]).replace("+", "")))
-              );
-            // 기준 소요일이 범위로 지정되지 않은 경우
+              // LCL 운임
             } else {
-              data_tt_formatted = (
-                String(Number(data_absolutett) + Number(String(singledata[17]).replace("+", "")))
-              );
+              if (String(singledata[e + 1]).includes("+")) {
+                // 운임이 절대값이 아닌 경우
+                data_fare = Number(String(singledata[e + 1]).replace("+", ""));
+                data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_lcl;
+                data_fare = Math.max(
+                  Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
+                  Number(data_fare) + marginsetting[2][1] as number
+                );
+                data_fare = Math.ceil(Number(data_fare) / 10) * 10;
+                data_fare_formatted = String(data_fare);
+              } else if (Number(singledata[e + 1] as string) !== 0) {
+                // 운임이 절대값인 경우
+                data_fare = Number(singledata[e + 1]) + data_addedsurcharge_lcl;
+                data_fare = Math.max(
+                  Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
+                  Number(data_fare) + marginsetting[2][1] as number
+                );
+                data_fare = Math.ceil(Number(data_fare) / 10) * 10;
+                data_fare_formatted = String(data_fare);
+              }
+              if (searchsettings.volumetype === "all") {
+                data_fare_formatted = data_fare_formatted + " (LCL)";
+              }
+              /*  // 정렬
+               *  LCL 운임이 검색 결과에 포함되는건
+               *  1. 운송 단위 조건이 LCL인 경우
+               *  2. 운송 단위 조건이 ALL이고 LCL 운임이 존재하는 경우
+               *  뿐인데 1번이면 그냥 LCL 운임으로 정렬될 것이고, 2번이면 LCL 운임이 모든 컨테이너 운임보다 낮기 때문에 LCL이 맨 앞에 올 것임
+               */ 
+              searchresult[8] = data_fare;
             }
-            // 운송 소요일이 절대값인 경우
-          } else if ((singledata[17] as string) !== "") {
-            data_tt_formatted = singledata[17] as string;
-            // 운송 소요일이 없는 경우
-          } else {
-            data_tt_formatted = "견적 시 문의";
-          }
-          searchresult[4] = data_tt_formatted;
-          
-          // 운임
-          let data_fare_formatted = "";
-          let data_fare = 0;
-            // FCL 운임
-          if (singledata[2] === "FCL") {
-            // 20피트
-            if (String(singledata[15]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[15]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_20std;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
-                Number(data_fare) + marginsetting[0][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            } else if (Number(singledata[15] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[15]) + data_addedsurcharge_20std;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[0][0] as number) / 100,
-                Number(data_fare) + marginsetting[0][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-              // 운임이 없는 경우
-            } else {
-              data_fare = 0;
-              data_fare_formatted = "- "
-            }
-            data_fare_formatted = data_fare_formatted + " | ";
-            // 40피트 하이큐브
-            if (String(singledata[16]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[16]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof2 + data_addedsurcharge_40hc;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
-                Number(data_fare) + marginsetting[1][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = data_fare_formatted + String(data_fare);
-            } else if (Number(singledata[16] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[16]) + data_addedsurcharge_40hc;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[1][0] as number) / 100,
-                Number(data_fare) + marginsetting[1][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = data_fare_formatted + String(data_fare);
-              // 운임이 없는 경우
-            } else {
-              data_fare = 0;
-              data_fare_formatted = data_fare_formatted + " -";
-            }
-            // LCL 운임
-          } else {
-            if (String(singledata[15]).includes("+")) {
-              // 운임이 절대값이 아닌 경우
-              data_fare = Number(String(singledata[15]).replace("+", ""));
-              data_fare = Number(data_fare) + data_absoluteof1 + data_addedsurcharge_lcl;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
-                Number(data_fare) + marginsetting[2][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            } else if (Number(singledata[15] as string) !== 0) {
-              // 운임이 절대값인 경우
-              data_fare = Number(singledata[15]) + data_addedsurcharge_lcl;
-              data_fare = Math.max(
-                Number(data_fare) * (100 + marginsetting[2][0] as number) / 100,
-                Number(data_fare) + marginsetting[2][1] as number
-              );
-              data_fare = Math.ceil(Number(data_fare) / 10) * 10;
-              data_fare_formatted = String(data_fare);
-            }
-          }
-          searchresult[6] = data_fare_formatted;
-          resultdata.push([...searchresult]);
+            searchresult[6] = data_fare_formatted;
+            resultdata.push([...searchresult]);
+          } // for(let e of [6, 10, 14, 18])
+        } // if(선적항이 출발지 검색 조건에 포함되고 운임이 존재하는 경우)
+      } // if(검색 조건에 맞는 경우)
+    } // for(let i = 2; i < datasheetvalues.length; i++)
+
+    // 정렬
+    if (sortsetting[6] === true) { // 오름차순
+      resultdata.sort((a, b) => {
+        return (a[8] as number) - (b[8] as number);
+      });
+    } else { // 내림차순
+      resultdata.sort((a, b) => {
+        return (b[8] as number) - (a[8] as number);
+      });
+    }
+
+    // 그룹화
+    let groupingorder: (number | string)[][] = [
+      ["출발 위치", sortsetting[0]], ["운송사", sortsetting[2]], ["도착 위치", sortsetting[4]]];
+    groupingorder = groupingorder.filter((item) => item[1] !== 0);
+    groupingorder = groupingorder.sort((a, b) => (b[1] as number) - (a[1] as number));
+    let listoforigins: string[] = [];
+    let listofcarriers: string[] = [];
+    let listofdestinations: string[] = [];
+    if (groupingorder.length > 0) {
+      for (let i = 0; i < resultdata.length; i++) {
+        if (listoforigins.indexOf(resultdata[i][0] as string) === -1) {
+          listoforigins.push(resultdata[i][0] as string);
+        }
+        if (listofcarriers.indexOf(resultdata[i][5] as string) === -1) {
+          listofcarriers.push(resultdata[i][5] as string);
+        }
+        if (listofdestinations.indexOf(resultdata[i][3] as string) === -1) {
+          listofdestinations.push(resultdata[i][3] as string);
         }
       }
+      for (let i = 0; i < groupingorder.length; i++) {
+        if (groupingorder[i][0] === "출발 위치") {
+          for (let ii = 0; ii < resultdata.length; ii++) {
+            resultdata[ii][8] = listoforigins.indexOf(resultdata[ii][0] as string);
+            resultdata[ii][8] = Number(resultdata[ii][8]) * 10000 + ii;
+          }
+        } else if (groupingorder[i][0] === "운송사") {
+          for (let ii = 0; ii < resultdata.length; ii++) {
+            resultdata[ii][8] = listofcarriers.indexOf(resultdata[ii][5] as string);
+            resultdata[ii][8] = Number(resultdata[ii][8]) * 10000 + ii;
+          }
+        } else if (groupingorder[i][0] === "도착 위치") {
+          for (let ii = 0; ii < resultdata.length; ii++) {
+            resultdata[ii][8] = listofdestinations.indexOf(resultdata[ii][3] as string);
+            resultdata[ii][8] = Number(resultdata[ii][8]) * 10000 + ii;
+          }
+        }
+        resultdata.sort((a, b) => {return (a[8] as number) - (b[8] as number);});
+        groupingorder.splice(0, 1);
+      }
     }
+    for (let i = 0; i < resultdata.length; i++) {
+      resultdata[i].splice(8, 1);
+    }
+
+    resultdata.unshift(resultdataheader[1]);
+    resultdata.unshift(resultdataheader[0]);
 
     // 찾은 데이터 수
     resultdata[0][1] = resultdata.length - 2;
@@ -1969,7 +1715,7 @@ async function fix() {
     // 수정, 신규 (총 2개)
     //
     // 변경한 항목의 카테고리:
-    // 전체, 유효 기간, 운임 특성, 부산발 정보, 인천발 정보, 광양발 정보, 평택-당진발 정보, 경로 정보, 메모, 프리타임, 도착지 비용1~7 (총 17개)
+    // 전체, 유효 기간, 운임 특성, 선적항1 정보, 선적항2 정보, 선적항3 정보, 선적항4 정보, 경로 정보, 메모, 프리타임, 도착지 비용1~7 (총 17개)
 
     for (let i = 0; i < selectedloglist.length; i++) {
       singlelog = selectedloglist[i];
@@ -1983,81 +1729,85 @@ async function fix() {
         return;
       }
       if (singlelog[2] === "신규") {
-        datasheetdata[dataindex] = ([singlelog[3], singlelog[4], singlelog[5]] as string[]).concat(Array(57).fill(""));
+        datasheetdata[dataindex] = ([singlelog[3], singlelog[4], singlelog[5]] as string[]).concat(Array(61).fill(""));
       } else if (singlelog[2] === "수정") {
         if (singlelog[6] === "유효 기간") {
           datasheetdata[dataindex][3] = singlelog[7];
           datasheetdata[dataindex][4] = singlelog[8];
         } else if (singlelog[6] === "운임 특성") {
           datasheetdata[dataindex][5] = singlelog[7];
-        } else if (singlelog[6] === "부산발 정보") {
+        } else if (singlelog[6] === "선적항1 정보") {
           datasheetdata[dataindex][6] = singlelog[7];
           datasheetdata[dataindex][7] = singlelog[8];
           datasheetdata[dataindex][8] = singlelog[9];
-        } else if (singlelog[6] === "인천발 정보") {
-          datasheetdata[dataindex][9] = singlelog[7];
-          datasheetdata[dataindex][10] = singlelog[8];
-          datasheetdata[dataindex][11] = singlelog[9];
-        } else if (singlelog[6] === "광양발 정보") {
-          datasheetdata[dataindex][12] = singlelog[7];
-          datasheetdata[dataindex][13] = singlelog[8];
-          datasheetdata[dataindex][14] = singlelog[9];
-        } else if (singlelog[6] === "평택-당진발 정보") {
-          datasheetdata[dataindex][15] = singlelog[7];
-          datasheetdata[dataindex][16] = singlelog[8];
-          datasheetdata[dataindex][17] = singlelog[9];
-        } else if (singlelog[6] === "경로 정보") {
+          datasheetdata[dataindex][9] = singlelog[10];
+        } else if (singlelog[6] === "선적항2 정보") {
+          datasheetdata[dataindex][10] = singlelog[7];
+          datasheetdata[dataindex][11] = singlelog[8];
+          datasheetdata[dataindex][12] = singlelog[9];
+          datasheetdata[dataindex][13] = singlelog[10];
+        } else if (singlelog[6] === "선적항3 정보") {
+          datasheetdata[dataindex][14] = singlelog[7];
+          datasheetdata[dataindex][15] = singlelog[8];
+          datasheetdata[dataindex][16] = singlelog[9];
+          datasheetdata[dataindex][17] = singlelog[10];
+        } else if (singlelog[6] === "선적항4 정보") {
           datasheetdata[dataindex][18] = singlelog[7];
           datasheetdata[dataindex][19] = singlelog[8];
           datasheetdata[dataindex][20] = singlelog[9];
+          datasheetdata[dataindex][21] = singlelog[10];
+        } else if (singlelog[6] === "경로 정보") {
+          datasheetdata[dataindex][22] = singlelog[7];
+          datasheetdata[dataindex][23] = singlelog[8];
+          datasheetdata[dataindex][24] = singlelog[9];
         } else if (singlelog[6] === "프리타임") {
-          datasheetdata[dataindex][21] = singlelog[7];
-          datasheetdata[dataindex][22] = singlelog[8];
-          datasheetdata[dataindex][23] = singlelog[9];
+          datasheetdata[dataindex][25] = singlelog[7];
+          datasheetdata[dataindex][26] = singlelog[8];
+          datasheetdata[dataindex][27] = singlelog[9];
         } else if (singlelog[6] === "도착지 비용1") {
-          datasheetdata[dataindex][24] = singlelog[7] === "true";
-          datasheetdata[dataindex][25] = singlelog[8];
-          datasheetdata[dataindex][26] = singlelog[9];
-          datasheetdata[dataindex][27] = singlelog[10];
-          datasheetdata[dataindex][28] = Number(singlelog[11]);
+          datasheetdata[dataindex][28] = singlelog[7] === "true";
+          datasheetdata[dataindex][29] = singlelog[8];
+          datasheetdata[dataindex][30] = singlelog[9];
+          datasheetdata[dataindex][31] = singlelog[10];
+          datasheetdata[dataindex][32] = Number(singlelog[11]);
         } else if (singlelog[6] === "도착지 비용2") {
-          datasheetdata[dataindex][29] = singlelog[7] === "true";
-          datasheetdata[dataindex][30] = singlelog[8];
-          datasheetdata[dataindex][31] = singlelog[9];
-          datasheetdata[dataindex][32] = singlelog[10];
-          datasheetdata[dataindex][33] = Number(singlelog[11]);
+          datasheetdata[dataindex][33] = singlelog[7] === "true";
+          datasheetdata[dataindex][34] = singlelog[8];
+          datasheetdata[dataindex][35] = singlelog[9];
+          datasheetdata[dataindex][36] = singlelog[10];
+          datasheetdata[dataindex][37] = Number(singlelog[11]);
         } else if (singlelog[6] === "도착지 비용3") {
-          datasheetdata[dataindex][34] = singlelog[7] === "true";
-          datasheetdata[dataindex][35] = singlelog[8];
-          datasheetdata[dataindex][36] = singlelog[9];
-          datasheetdata[dataindex][37] = singlelog[10];
-          datasheetdata[dataindex][38] = Number(singlelog[11]);
+          datasheetdata[dataindex][38] = singlelog[7] === "true";
+          datasheetdata[dataindex][39] = singlelog[8];
+          datasheetdata[dataindex][40] = singlelog[9];
+          datasheetdata[dataindex][41] = singlelog[10];
+          datasheetdata[dataindex][42] = Number(singlelog[11]);
         } else if (singlelog[6] === "도착지 비용4") {
-          datasheetdata[dataindex][39] = singlelog[7] === "true";
-          datasheetdata[dataindex][40] = singlelog[8];
-          datasheetdata[dataindex][41] = singlelog[9];
-          datasheetdata[dataindex][42] = singlelog[10];
-          datasheetdata[dataindex][43] = Number(singlelog[11]);
+          datasheetdata[dataindex][43] = singlelog[7] === "true";
+          datasheetdata[dataindex][44] = singlelog[8];
+          datasheetdata[dataindex][45] = singlelog[9];
+          datasheetdata[dataindex][46] = singlelog[10];
+          datasheetdata[dataindex][47] = Number(singlelog[11]);
         } else if (singlelog[6] === "도착지 비용5") {
-          datasheetdata[dataindex][44] = singlelog[7] === "true";
-          datasheetdata[dataindex][45] = singlelog[8];
-          datasheetdata[dataindex][46] = singlelog[9];
-          datasheetdata[dataindex][47] = singlelog[10];
-          datasheetdata[dataindex][48] = Number(singlelog[11]);
+          datasheetdata[dataindex][48] = singlelog[7] === "true";
+          datasheetdata[dataindex][49] = singlelog[8];
+          datasheetdata[dataindex][50] = singlelog[9];
+          datasheetdata[dataindex][51] = singlelog[10];
+          datasheetdata[dataindex][52] = Number(singlelog[11]);
         } else if (singlelog[6] === "도착지 비용6") {
-          datasheetdata[dataindex][49] = singlelog[7] === "true";
-          datasheetdata[dataindex][50] = singlelog[8];
-          datasheetdata[dataindex][51] = singlelog[9];
-          datasheetdata[dataindex][52] = singlelog[10];
-          datasheetdata[dataindex][53] = Number(singlelog[11]);
+          datasheetdata[dataindex][53] = singlelog[7] === "true";
+          datasheetdata[dataindex][54] = singlelog[8];
+          datasheetdata[dataindex][55] = singlelog[9];
+          datasheetdata[dataindex][56] = singlelog[10];
+          datasheetdata[dataindex][57] = Number(singlelog[11]);
         } else if (singlelog[6] === "도착지 비용7") {
-          datasheetdata[dataindex][54] = singlelog[7] === "true";
-          datasheetdata[dataindex][55] = singlelog[8];
-          datasheetdata[dataindex][56] = singlelog[9];
-          datasheetdata[dataindex][57] = singlelog[10];
-          datasheetdata[dataindex][58] = Number(singlelog[11]);
+          datasheetdata[dataindex][58] = singlelog[7] === "true";
+          datasheetdata[dataindex][59] = singlelog[8];
+          datasheetdata[dataindex][60] = singlelog[9];
+          datasheetdata[dataindex][61] = singlelog[10];
+          datasheetdata[dataindex][62] = Number(singlelog[11]);
         } else if (singlelog[6] === "메모") {
-          datasheetdata[dataindex][59] = singlelog[7];
+          datasheetdata[dataindex][63] = singlelog[7];
         }
       }
     }
@@ -2074,7 +1824,7 @@ async function fix() {
 }
 
 /** Default helper for invoking an action and handling errors. */
-async function tryCatch(callback) {
+async function tryCatch(callback: () => Promise<void>) {
   try {
     await callback();
   } catch (error) {
