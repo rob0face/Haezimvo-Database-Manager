@@ -1310,10 +1310,12 @@ async function explore() {
 
     const today = new Date();
     resulttitlerange.values = [[
-      locationlist.map((row) => row[4] as string).indexOf(searchsettings.from) === -1 ?
-        searchsettings.from : locationlist[locationlist.map((row) => row[4] as string).indexOf(searchsettings.from)][3],
-      locationlist.map((row) => row[4] as string).indexOf(searchsettings.to) === -1 ?
-        searchsettings.to : locationlist[locationlist.map((row) => row[4] as string).indexOf(searchsettings.to)][3],
+      searchsettings.fromtype === "all" ? "모두" :
+        locationlist.map((row) => row[4] as string).indexOf(searchsettings.from) === -1 ? searchsettings.from :
+        locationlist[locationlist.map((row) => row[4] as string).indexOf(searchsettings.from)][3],
+      searchsettings.totype === "all" ? "모두" :
+        locationlist.map((row) => row[4] as string).indexOf(searchsettings.to) === -1 ? searchsettings.to :
+        locationlist[locationlist.map((row) => row[4] as string).indexOf(searchsettings.to)][3],
       searchsettings.volumetype === "all" ? "모두" : searchsettings.volumetype,
       searchsettings.carriertype === "all" ? "모두" : searchsettings.carrier,
       (today.getFullYear() + "-" + (today.getMonth() + 1) + "-" + today.getDate()),
@@ -1463,6 +1465,12 @@ async function explore() {
           ) {
             // 출발 위치
             searchresult[0] = singledata[e] as string;
+            if (locationlist.map((row) => row[4] as string).indexOf(searchresult[0] as string) === -1) {
+              console.log((i + 1) + "행 출발지 오류: " + searchresult[0] + "는(은) 유효한 출발지가 아닙니다.");
+              searchresult[0] = searchresult[0];
+            } else {
+              searchresult[0] = locationlist[locationlist.map((row) => row[4] as string).indexOf(searchresult[0] as string)][3] as string;
+            }
             // 운송 소요일
             let data_tt_formatted = "";
             // 운송 소요일이 절대값이 아닌 경우
@@ -1602,15 +1610,10 @@ async function explore() {
 
     // 정렬
     if (sortsetting[6] === true) { // 오름차순
-      resultdata.sort((a, b) => {
-        return (a[8] as number) - (b[8] as number);
-      });
+      resultdata.sort((a, b) => {return (a[8] as number) - (b[8] as number);});
     } else { // 내림차순
-      resultdata.sort((a, b) => {
-        return (b[8] as number) - (a[8] as number);
-      });
+      resultdata.sort((a, b) => {return (b[8] as number) - (a[8] as number);});
     }
-
     // 그룹화
     let groupingorder: (number | string)[][] = [
       ["출발 위치", sortsetting[0]], ["운송사", sortsetting[2]], ["도착 위치", sortsetting[4]]];
@@ -1631,27 +1634,27 @@ async function explore() {
           listofdestinations.push(resultdata[i][3] as string);
         }
       }
-      for (let i = 0; i < groupingorder.length; i++) {
-        if (groupingorder[i][0] === "출발 위치") {
-          for (let ii = 0; ii < resultdata.length; ii++) {
-            resultdata[ii][8] = listoforigins.indexOf(resultdata[ii][0] as string);
-            resultdata[ii][8] = Number(resultdata[ii][8]) * 10000 + ii;
+      for (let groupinginstance of groupingorder) {
+        if (groupinginstance[0] === "출발 위치") {
+          for (let i = 0; i < resultdata.length; i++) {
+            resultdata[i][8] = listoforigins.indexOf(resultdata[i][0] as string);
+            resultdata[i][8] = Number(resultdata[i][8]) * 31416 + i;
           }
-        } else if (groupingorder[i][0] === "운송사") {
-          for (let ii = 0; ii < resultdata.length; ii++) {
-            resultdata[ii][8] = listofcarriers.indexOf(resultdata[ii][5] as string);
-            resultdata[ii][8] = Number(resultdata[ii][8]) * 10000 + ii;
+        } else if (groupinginstance[0] === "운송사") {
+          for (let i = 0; i < resultdata.length; i++) {
+            resultdata[i][8] = listofcarriers.indexOf(resultdata[i][5] as string);
+            resultdata[i][8] = Number(resultdata[i][8]) * 31416 + i;
           }
-        } else if (groupingorder[i][0] === "도착 위치") {
-          for (let ii = 0; ii < resultdata.length; ii++) {
-            resultdata[ii][8] = listofdestinations.indexOf(resultdata[ii][3] as string);
-            resultdata[ii][8] = Number(resultdata[ii][8]) * 10000 + ii;
+        } else if (groupinginstance[0] === "도착 위치") {
+          for (let i = 0; i < resultdata.length; i++) {
+            resultdata[i][8] = listofdestinations.indexOf(resultdata[i][3] as string);
+            resultdata[i][8] = Number(resultdata[i][8]) * 31416 + i;
           }
         }
         resultdata.sort((a, b) => {return (a[8] as number) - (b[8] as number);});
-        groupingorder.splice(0, 1);
       }
     }
+    // 정렬 및 그룹화 완료
     for (let i = 0; i < resultdata.length; i++) {
       resultdata[i].splice(8, 1);
     }
