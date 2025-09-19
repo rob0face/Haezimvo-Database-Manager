@@ -841,7 +841,7 @@ async function deliver() {
     exchangeratesheetrange.load("values");
 
     const deliversheet = context.workbook.worksheets.getItem("운임");
-    const deliversheetheaderrange = deliversheet.getRange("A1:AT2");
+    const deliversheetheaderrange = deliversheet.getRange("A1:AW2");
     deliversheetheaderrange.load("values");
 
     const locationsheet = context.workbook.worksheets.getItem("위치");
@@ -863,8 +863,8 @@ async function deliver() {
     let singleitem: (string | number | boolean)[] = [];
     // singleitem 구조: [0]운송사, [1]출발 위치, [2]POL, [3]도착 국가, [4]도착 위치, [5]POD,
     // [6]환적유무, [7]환적항1, [8]환적항2, [9]운송 단위, [10]운송 소요일, [11]유효기간 시작, [12]유효기간 종료,
-    // [13]20피트 운임, [14]40피트 하이큐브 운임, [15]LCL 운임, [16]프리타임, [17]USCAN,
-    // [18, 19, 20, 21]도착지비용1{항목, 단위, 화폐, 금액} ~ [42, 43, 44, 45]도착지비용7
+    // [13]20피트 운임, [14]40피트 하이큐브 운임, [15]LCL 운임, [16]20피트 순수운임, [17]40피트 하이큐브 순수운임, [18]LCL 순수운임,
+    // [19]프리타임, [20]USCAN, [21, 22, 23, 24]도착지비용1{항목, 단위, 화폐, 금액} ~ [45, 46, 47, 48]도착지비용7
 
     let singledata: (string | number | boolean)[] = [];
 
@@ -944,7 +944,7 @@ async function deliver() {
         "운송 소요일",
         singledata[3] as string,
         singledata[4] as string,
-        "20피트 운임", "40피트 하이큐브 운임", "LCL 운임",
+        "20피트 운임", "40피트 하이큐브 운임", "LCL 운임", "20피트 순수운임", "40피트 하이큐브 순수운임", "LCL 순수운임",
         ((singledata[25] as string) !== "" && (new Date(singledata[27] as string) > new Date())) ? singledata[25] as string : "견적 시 문의",
         ((locationlist[data_podindex][1] as string) === "미국" || (locationlist[data_podindex][1] as string) === "캐나다") ? 1 : 0
       ];
@@ -954,7 +954,7 @@ async function deliver() {
       let data_addedsurcharge_20std = 0;
       let data_addedsurcharge_40hc = 0;
       let data_addedsurcharge_lcl = 0;
-      let e = 18;
+      let e = 21;
       for (let ii of [28, 33, 38, 43, 48, 53, 58]) {
         // 운임에 포함할 도착지 비용을 변수에 더하고 0으로 만듦
         if (singledata[ii] as boolean) {
@@ -1044,6 +1044,7 @@ async function deliver() {
             // 운임이 절대값이 아닌 경우
             singleitem[13] = Number(String(singledata[e]).replace("+", ""));
             singleitem[13] = Number(singleitem[13]) + data_absoluteof1 + data_addedsurcharge_20std;
+            singleitem[16] = singleitem[13];
             singleitem[13] = Math.max(
               Number(singleitem[13]) * (100 + marginsetting[0][0] as number) / 100,
               Number(singleitem[13]) + marginsetting[0][1] as number
@@ -1052,6 +1053,7 @@ async function deliver() {
           } else if (Number(singledata[e] as string) !== 0) {
             // 운임이 절대값인 경우
             singleitem[13] = Number(singledata[e]) + data_addedsurcharge_20std;
+            singleitem[16] = singleitem[13];
             singleitem[13] = Math.max(
               Number(singleitem[13]) * (100 + marginsetting[0][0] as number) / 100,
               Number(singleitem[13]) + marginsetting[0][1] as number
@@ -1060,12 +1062,14 @@ async function deliver() {
             // 운임이 없는 경우
           } else {
             singleitem[13] = "";
+            singleitem[16] = "";
           }
           // 40피트 하이큐브
           if (String(singledata[e + 1]).includes("+")) {
             // 운임이 절대값이 아닌 경우
             singleitem[14] = Number(String(singledata[e + 1]).replace("+", ""));
             singleitem[14] = Number(singleitem[14]) + data_absoluteof2 + data_addedsurcharge_40hc;
+            singleitem[17] = singleitem[14];
             singleitem[14] = Math.max(
               Number(singleitem[14]) * (100 + marginsetting[1][0] as number) / 100,
               Number(singleitem[14]) + marginsetting[1][1] as number
@@ -1074,6 +1078,7 @@ async function deliver() {
           } else if (Number(singledata[e + 1] as string) !== 0) {
             // 운임이 절대값인 경우
             singleitem[14] = Number(singledata[e + 1]) + data_addedsurcharge_40hc;
+            singleitem[17] = singleitem[14];
             singleitem[14] = Math.max(
               Number(singleitem[14]) * (100 + marginsetting[1][0] as number) / 100,
               Number(singleitem[14]) + marginsetting[1][1] as number
@@ -1082,17 +1087,22 @@ async function deliver() {
             // 운임이 없는 경우
           } else {
             singleitem[14] = "";
+            singleitem[17] = "";
           }
           singleitem[15] = "";
+          singleitem[18] = "";
 
           // LCL 운임
         } else {
           singleitem[13] = "";
           singleitem[14] = "";
+          singleitem[16] = "";
+          singleitem[17] = "";
           if (String(singledata[e]).includes("+")) {
             // 운임이 절대값이 아닌 경우
             singleitem[15] = Number(String(singledata[e]).replace("+", ""));
             singleitem[15] = Number(singleitem[15]) + data_absoluteof1 + data_addedsurcharge_lcl;
+            singleitem[18] = singleitem[15];
             singleitem[15] = Math.max(
               Number(singleitem[15]) * (100 + marginsetting[2][0] as number) / 100,
               Number(singleitem[15]) + marginsetting[2][1] as number
@@ -1101,6 +1111,7 @@ async function deliver() {
           } else if (Number(singledata[e] as string) !== 0) {
             // 운임이 절대값인 경우
             singleitem[15] = Number(singledata[e]) + data_addedsurcharge_lcl;
+            singleitem[18] = singleitem[15];
             singleitem[15] = Math.max(
               Number(singleitem[15]) * (100 + marginsetting[2][0] as number) / 100,
               Number(singleitem[15]) + marginsetting[2][1] as number
@@ -1114,13 +1125,13 @@ async function deliver() {
       }
     }
 
-    let deliversheetrange = deliversheet.getRange("A:AT").getUsedRange();
+    let deliversheetrange = deliversheet.getRange("A:AW").getUsedRange();
     deliversheetrange.load("values");
     await context.sync();
 
     // 입력할 데이터가 이미 입력된 데이터보다 많으면 범위를 다시 지정함
     if (deliversheetdata.length > deliversheetrange.values.length) {
-      deliversheetrange = deliversheet.getRange("A1:AT" + (deliversheetdata.length));
+      deliversheetrange = deliversheet.getRange("A1:AW" + (deliversheetdata.length));
       deliversheetrange.load("values");
       await context.sync();
     }
@@ -1128,8 +1139,8 @@ async function deliver() {
     // 입력할 데이터가 이미 입력된 데이터보다 적으면 빈 행을 추가함
     while (deliversheetdata.length < deliversheetrange.values.length) {
       deliversheetdata.push([
-        // 46개의 빈 요소 추가
-        ...Array(46).fill("")
+        // 49개의 빈 요소 추가
+        ...Array(49).fill("")
       ]);
     }
 
