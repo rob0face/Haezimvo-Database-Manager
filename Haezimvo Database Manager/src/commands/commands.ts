@@ -1,29 +1,12 @@
-/// <reference path="office-js.d.ts" />
+// Type definitions for Office.js are provided by the @types/office-js package.
 
-// document.getElementById("button_a").addEventListener("click", () => tryCatch(apply));
-// document.getElementById("button_b").addEventListener("click", () => tryCatch(bring));
-// document.getElementById("button_c").addEventListener("click", () => tryCatch(combine));
-// document.getElementById("button_d").addEventListener("click", () => tryCatch(deliver));
-// document.getElementById("button_e").addEventListener("click", () => tryCatch(explore));
-// document.getElementById("button_f").addEventListener("click", () => tryCatch(fix));
-
-const button_a = document.getElementById("button_a")!;
-button_a.addEventListener("click", () => tryCatch(apply));
-
-const button_b = document.getElementById("button_b")!;
-button_b.addEventListener("click", () => tryCatch(bring));
-
-const button_c = document.getElementById("button_c")!;
-button_c.addEventListener("click", () => tryCatch(combine));
-
-const button_d = document.getElementById("button_d")!;
-button_d.addEventListener("click", () => tryCatch(deliver));
-
-const button_e = document.getElementById("button_e")!;
-button_e.addEventListener("click", () => tryCatch(explore));
-
-const button_f = document.getElementById("button_f")!;
-button_f.addEventListener("click", () => tryCatch(fix));
+// Register each function with Office actions
+Office.actions.associate("apply", apply);
+Office.actions.associate("bring", bring);
+Office.actions.associate("combine", combine);
+Office.actions.associate("deliver", deliver);
+Office.actions.associate("explore", explore);
+Office.actions.associate("fix", fix);
 
 // 데이터 반영
 async function apply() {
@@ -273,8 +256,8 @@ async function apply() {
         logsheetdata.push([...newlog]);
       }
       if (
-        datasheetinputrange.values[0][6] !== newdata[6] ||
-        datasheetinputrange.values[0][7] !== newdata[7] ||
+        datasheetinputrange.values[0][6] !== newdata[6] || 
+        datasheetinputrange.values[0][7] !== newdata[7] || 
         datasheetinputrange.values[0][8] !== newdata[8] ||
         datasheetinputrange.values[0][9] !== newdata[9]
       ) {
@@ -292,7 +275,7 @@ async function apply() {
         logsheetdata.push([...newlog]);
       }
       if (
-        datasheetinputrange.values[0][10] !== newdata[10] ||
+        datasheetinputrange.values[0][10] !== newdata[10] || 
         datasheetinputrange.values[0][11] !== newdata[11] ||
         datasheetinputrange.values[0][12] !== newdata[12] ||
         datasheetinputrange.values[0][13] !== newdata[13]
@@ -311,8 +294,8 @@ async function apply() {
         logsheetdata.push([...newlog]);
       }
       if (
-        datasheetinputrange.values[0][14] !== newdata[14] ||
-        datasheetinputrange.values[0][15] !== newdata[15] ||
+        datasheetinputrange.values[0][14] !== newdata[14] || 
+        datasheetinputrange.values[0][15] !== newdata[15] || 
         datasheetinputrange.values[0][16] !== newdata[16] ||
         datasheetinputrange.values[0][17] !== newdata[17]
       ) {
@@ -333,7 +316,7 @@ async function apply() {
         datasheetinputrange.values[0][18] !== newdata[18] ||
         datasheetinputrange.values[0][19] !== newdata[19] ||
         datasheetinputrange.values[0][20] !== newdata[20] ||
-        datasheetinputrange.values[0][21] !== newdata[21]
+        datasheetinputrange.values[0][21] !== newdata[21] 
       ) {
         newlog[6] = "선적항4 정보";
         newlog[7] = String(datasheetinputrange.values[0][18]);
@@ -426,7 +409,7 @@ async function apply() {
 
     const logsheetnewrange = context.workbook.worksheets.getItem("로그").getRange("A1:R" + logsheetdata.length);
     logsheetnewrange.load("values");
-    logsheetnewrange.getColumn(17).control = { type: Excel.CellControlType.checkbox };
+    logsheetnewrange.getColumn(17).control = {type: Excel.CellControlType.checkbox};
     await context.sync();
 
     logsheetnewrange.values = logsheetdata;
@@ -721,7 +704,7 @@ async function combine() {
           datasheetdata[pushindex][18] !== singlepusheddata[18] ||
           datasheetdata[pushindex][19] !== singlepusheddata[19] ||
           datasheetdata[pushindex][20] !== singlepusheddata[20] ||
-          datasheetdata[pushindex][21] !== singlepusheddata[21]
+          datasheetdata[pushindex][21] !== singlepusheddata[21] 
         ) {
           newlog[6] = "선적항4 정보";
           newlog[7] = String(datasheetdata[pushindex][18]);
@@ -817,7 +800,7 @@ async function combine() {
 
     const logsheetnewrange = context.workbook.worksheets.getItem("로그").getRange("A1:R" + logsheetdata.length);
     logsheetnewrange.load("values");
-    logsheetnewrange.getColumn(17).control = { type: Excel.CellControlType.checkbox };
+    logsheetnewrange.getColumn(17).control = {type: Excel.CellControlType.checkbox};
     await context.sync();
 
     datasheetnewrange.values = datasheetdata;
@@ -841,7 +824,7 @@ async function deliver() {
     exchangeratesheetrange.load("values");
 
     const deliversheet = context.workbook.worksheets.getItem("운임");
-    const deliversheetheaderrange = deliversheet.getRange("A1:AX2");
+    const deliversheetheaderrange = deliversheet.getRange("A1:AW2");
     deliversheetheaderrange.load("values");
 
     const locationsheet = context.workbook.worksheets.getItem("위치");
@@ -864,14 +847,13 @@ async function deliver() {
     // singleitem 구조: [0]운송사, [1]출발 위치, [2]POL, [3]도착 국가, [4]도착 위치, [5]POD,
     // [6]환적유무, [7]환적항1, [8]환적항2, [9]운송 단위, [10]운송 소요일, [11]유효기간 시작, [12]유효기간 종료,
     // [13]20피트 운임, [14]40피트 하이큐브 운임, [15]LCL 운임, [16]20피트 순수운임, [17]40피트 하이큐브 순수운임, [18]LCL 순수운임,
-    // [19]도착 지역, [20]USCAN,
-    // [21]프리타임, [22, 23, 24, 25]도착지비용1{항목, 단위, 화폐, 금액} ~ [46, 47, 48, 49]도착지비용7
+    // [19]프리타임, [20]USCAN, [21, 22, 23, 24]도착지비용1{항목, 단위, 화폐, 금액} ~ [45, 46, 47, 48]도착지비용7
 
     let singledata: (string | number | boolean)[] = [];
 
     for (let i = 2; i < datasheetdata.length; i++) {
       singledata = datasheetdata[i];
-
+    
       // 기준운임1 설정
       let data_absoluteof1 = 0;
       let data_of1 = [
@@ -946,9 +928,8 @@ async function deliver() {
         singledata[3] as string,
         singledata[4] as string,
         "20피트 운임", "40피트 하이큐브 운임", "LCL 운임", "20피트 순수운임", "40피트 하이큐브 순수운임", "LCL 순수운임",
-        locationlist[data_podindex][2] as string,
-        ((locationlist[data_podindex][1] as string) === "미국" || (locationlist[data_podindex][1] as string) === "캐나다") ? 1 : 0,
         ((singledata[25] as string) !== "" && (new Date(singledata[27] as string) > new Date())) ? singledata[25] as string : "견적 시 문의",
+        ((locationlist[data_podindex][1] as string) === "미국" || (locationlist[data_podindex][1] as string) === "캐나다") ? 1 : 0
       ];
 
       // 도착지 비용 작성
@@ -956,7 +937,7 @@ async function deliver() {
       let data_addedsurcharge_20std = 0;
       let data_addedsurcharge_40hc = 0;
       let data_addedsurcharge_lcl = 0;
-      let e = 22;
+      let e = 21;
       for (let ii of [28, 33, 38, 43, 48, 53, 58]) {
         // 운임에 포함할 도착지 비용을 변수에 더하고 0으로 만듦
         if (singledata[ii] as boolean) {
@@ -964,15 +945,15 @@ async function deliver() {
             let currencyindex = exchangeratelist.map((row) => row[1] as string).indexOf(singledata[ii + 3] as string);
             if (currencyindex === -1) {
               console.log((i + 1) + "행 화폐 단위 오류: " + singledata[ii + 3] + "/USD 환율 정보를 가져올 수 없습니다.");
-              continue;
+            continue;
             } else {
-              data_addedsurcharge = Math.round((singledata[ii + 4] as number) * exchangeratelist[currencyindex][0] as number);
-              data_addedsurcharge = Math.ceil((3.1416 + data_addedsurcharge) / 5) * 5;
+            data_addedsurcharge = Math.round((singledata[ii + 4] as number) * exchangeratelist[currencyindex][0] as number);
+            data_addedsurcharge = Math.ceil((3.1416 + data_addedsurcharge) / 5) * 5;
             }
           } else {
             data_addedsurcharge = (singledata[ii + 4] as number);
           }
-          if (singledata[ii + 2] as string === "CON") {
+            if (singledata[ii + 2] as string === "CON") {
             data_addedsurcharge_20std += data_addedsurcharge;
             data_addedsurcharge_40hc += data_addedsurcharge;
           } else if (singledata[ii + 2] as string === "TEU") {
@@ -1014,9 +995,9 @@ async function deliver() {
         }
         // 운송 소요일
         let data_tt_formatted = "";
-        // 운송 소요일이 절대값이 아닌 경우
+          // 운송 소요일이 절대값이 아닌 경우
         if (String(singledata[e + 2]).includes("+")) {
-          // 기준 소요일이 범위로 지정된 경우
+            // 기준 소요일이 범위로 지정된 경우
           if (String(data_absolutett).includes("~")) {
             let data_tt_range = data_absolutett.split("~").map((item) => item.trim());
             data_tt_formatted = (
@@ -1127,13 +1108,13 @@ async function deliver() {
       }
     }
 
-    let deliversheetrange = deliversheet.getRange("A:AX").getUsedRange();
+    let deliversheetrange = deliversheet.getRange("A:AW").getUsedRange();
     deliversheetrange.load("values");
     await context.sync();
 
     // 입력할 데이터가 이미 입력된 데이터보다 많으면 범위를 다시 지정함
     if (deliversheetdata.length > deliversheetrange.values.length) {
-      deliversheetrange = deliversheet.getRange("A1:AX" + (deliversheetdata.length));
+      deliversheetrange = deliversheet.getRange("A1:AW" + (deliversheetdata.length));
       deliversheetrange.load("values");
       await context.sync();
     }
@@ -1141,8 +1122,8 @@ async function deliver() {
     // 입력할 데이터가 이미 입력된 데이터보다 적으면 빈 행을 추가함
     while (deliversheetdata.length < deliversheetrange.values.length) {
       deliversheetdata.push([
-        // 50개의 빈 요소 추가
-        ...Array(50).fill("")
+        // 49개의 빈 요소 추가
+        ...Array(49).fill("")
       ]);
     }
 
@@ -1152,7 +1133,7 @@ async function deliver() {
     console.log(deliversheetrange.values.length);
     console.log(deliversheetrange.values[0].length);
     */
-
+    
     deliversheetrange.values = deliversheetdata;
   });
 }
@@ -1204,44 +1185,44 @@ async function explore() {
 
     let searchsettings = {
       // 검색 조건
-      from: searchsetting[1][0] as string,
-      fromtype: (
+      from : searchsetting[1][0] as string,
+      fromtype : (
         searchsetting[1][0] as string === "All" ? "all" :
-          searchsetting[1][1] as boolean ? "filter" :
-            searchsetting[1][2] as boolean ? "country" :
-              searchsetting[1][3] as boolean ? "region" :
-                "location"
+        searchsetting[1][1] as boolean ? "filter" :
+        searchsetting[1][2] as boolean ? "country" :
+        searchsetting[1][3] as boolean ? "region" :
+        "location"
       ),
-      to: searchsetting[2][0] as string,
-      totype: (
+      to : searchsetting[2][0] as string,
+      totype : (
         searchsetting[2][0] as string === "All" ? "all" :
-          searchsetting[2][1] as boolean ? "filter" :
-            searchsetting[2][2] as boolean ? "country" :
-              searchsetting[2][3] as boolean ? "region" :
-                "location"
+        searchsetting[2][1] as boolean ? "filter" :
+        searchsetting[2][2] as boolean ? "country" :
+        searchsetting[2][3] as boolean ? "region" :
+        "location"
       ),
-      carrier: searchsetting[3][0] as string,
-      carriertype: (
+      carrier : searchsetting[3][0] as string,
+      carriertype : (
         searchsetting[3][0] as string === "All" ? "all" :
-          searchsetting[3][1] as boolean ? "filter" :
-            "specific"
+        searchsetting[3][1] as boolean ? "filter" :
+        "specific"
       ),
-      volumetype: (
+      volumetype : (
         searchsetting[4][0] as string === "LCL" ? "LCL" :
-          searchsetting[4][0] as string === "All" ? "all" :
-            "FCL"
+        searchsetting[4][0] as string === "All" ? "all" :
+        "FCL"
       ),
-      containtransshippingroute: searchsetting[4][2] as boolean,
-      containexpiredfare: searchsetting[4][3] as boolean,
+      containtransshippingroute : searchsetting[4][2] as boolean,
+      containexpiredfare : searchsetting[4][3] as boolean,
       // 옵션
-      addmargin: searchsetting[0][4] as boolean,
-      expiredfareonly: searchsetting[1][4] as boolean,
-      expiredfreetimeonly: searchsetting[2][4] as boolean,
-      conditionzero: searchsetting[3][4] as boolean,
-      filterbyofferinglevel:
+      addmargin : searchsetting[0][4] as boolean,
+      expiredfareonly : searchsetting[1][4] as boolean,
+      expiredfreetimeonly : searchsetting[2][4] as boolean,
+      conditionzero : searchsetting[3][4] as boolean,
+      filterbyofferinglevel :
         searchsetting[4][4] as boolean === false ? "every" :
-          searchsetting[4][6].substring(0, 1) === "!" ? "except" : "only",
-      offeringlevel: (searchsetting[4][6] as string).replace("!", "").trim()
+        searchsetting[4][6].substring(0, 1) === "!" ? "except" : "only",
+      offeringlevel : (searchsetting[4][6] as string).replace("!", "").trim()
     };
     if (searchsettings.conditionzero) {
       searchsettings.fromtype = "all";
@@ -1253,13 +1234,13 @@ async function explore() {
     }
     // 한글로 입력된 위치는 영어로 변환
     let locationindex = 0;
-    if (searchsettings.fromtype === "location") {
+    if(searchsettings.fromtype === "location") {
       locationindex = locationlist.map((row) => row[3] as string).indexOf(searchsettings.from);
       if (locationindex !== -1) {
         searchsettings.from = locationlist[locationindex][4] as string;
       }
     }
-    if (searchsettings.totype === "location") {
+    if(searchsettings.totype === "location") {
       locationindex = locationlist.map((row) => row[3] as string).indexOf(searchsettings.to);
       if (locationindex !== -1) {
         searchsettings.to = locationlist[locationindex][4] as string;
@@ -1325,10 +1306,10 @@ async function explore() {
     resulttitlerange.values = [[
       searchsettings.fromtype === "all" ? "모두" :
         locationlist.map((row) => row[4] as string).indexOf(searchsettings.from) === -1 ? searchsettings.from :
-          locationlist[locationlist.map((row) => row[4] as string).indexOf(searchsettings.from)][3],
+        locationlist[locationlist.map((row) => row[4] as string).indexOf(searchsettings.from)][3],
       searchsettings.totype === "all" ? "모두" :
         locationlist.map((row) => row[4] as string).indexOf(searchsettings.to) === -1 ? searchsettings.to :
-          locationlist[locationlist.map((row) => row[4] as string).indexOf(searchsettings.to)][3],
+        locationlist[locationlist.map((row) => row[4] as string).indexOf(searchsettings.to)][3],
       searchsettings.volumetype === "all" ? "모두" : searchsettings.volumetype,
       searchsettings.carriertype === "all" ? "모두" : searchsettings.carrier,
       (today.getFullYear() + "-" + (today.getMonth() + 1) + "-" + today.getDate()),
@@ -1354,7 +1335,7 @@ async function explore() {
           searchsettings.fromtype === "all"
         ) &&
         // 도착지 확인
-        (searchfor.to.indexOf(singledata[0] as string) !== -1 || searchsettings.totype === "all") &&
+        (searchfor.to.indexOf(singledata[0] as string) !== -1 || searchsettings.totype === "all" ) &&
         // 운송사 확인
         (searchfor.carrier.indexOf(singledata[1] as string) !== -1 || searchsettings.carriertype === "all") &&
         // 운송 단위 확인
@@ -1430,15 +1411,15 @@ async function explore() {
               let currencyindex = exchangeratelist.map((row) => row[1] as string).indexOf(singledata[ii + 3] as string);
               if (currencyindex === -1) {
                 console.log((i + 1) + "행 화폐 단위 오류: " + singledata[ii + 3] + "/USD 환율 정보를 가져올 수 없습니다.");
-                continue;
+              continue;
               } else {
-                data_addedsurcharge = Math.round((singledata[ii + 4] as number) * exchangeratelist[currencyindex][0] as number);
-                data_addedsurcharge = Math.ceil((3.1416 + data_addedsurcharge) / 5) * 5;
+              data_addedsurcharge = Math.round((singledata[ii + 4] as number) * exchangeratelist[currencyindex][0] as number);
+              data_addedsurcharge = Math.ceil((3.1416 + data_addedsurcharge) / 5) * 5;
               }
             } else {
               data_addedsurcharge = (singledata[ii + 4] as number);
             }
-            if (singledata[ii + 2] as string === "CON") {
+              if (singledata[ii + 2] as string === "CON") {
               data_addedsurcharge_20std += data_addedsurcharge;
               data_addedsurcharge_40hc += data_addedsurcharge;
             } else if (singledata[ii + 2] as string === "TEU") {
@@ -1496,7 +1477,7 @@ async function explore() {
                   "~" +
                   (Number(data_tt_range[1]) + Number(String(singledata[e + 3]).replace("+", "")))
                 );
-                // 기준 소요일이 범위로 지정되지 않은 경우
+              // 기준 소요일이 범위로 지정되지 않은 경우
               } else {
                 data_tt_formatted = (
                   String(Number(data_absolutett) + Number(String(singledata[e + 3]).replace("+", "")))
@@ -1510,12 +1491,12 @@ async function explore() {
               data_tt_formatted = "견적 시 문의";
             }
             searchresult[4] = data_tt_formatted;
-
+            
             // 운임
             let data_fare_formatted = "";
             let data_fare = 0;
             searchresult[8] = 0;
-            // FCL 운임
+              // FCL 운임
             if (singledata[2] === "FCL") {
               // 20피트
               if (String(singledata[e + 1]).includes("+")) {
@@ -1611,7 +1592,7 @@ async function explore() {
                *  1. 운송 단위 조건이 LCL인 경우
                *  2. 운송 단위 조건이 ALL이고 LCL 운임이 존재하는 경우
                *  뿐인데 1번이면 그냥 LCL 운임으로 정렬될 것이고, 2번이면 LCL 운임이 모든 컨테이너 운임보다 낮기 때문에 LCL이 맨 앞에 올 것임
-               */
+               */ 
               searchresult[8] = data_fare;
             }
             searchresult[6] = data_fare_formatted;
@@ -1623,9 +1604,9 @@ async function explore() {
 
     // 정렬
     if (sortsetting[6] === true) { // 오름차순
-      resultdata.sort((a, b) => { return (a[8] as number) - (b[8] as number); });
+      resultdata.sort((a, b) => {return (a[8] as number) - (b[8] as number);});
     } else { // 내림차순
-      resultdata.sort((a, b) => { return (b[8] as number) - (a[8] as number); });
+      resultdata.sort((a, b) => {return (b[8] as number) - (a[8] as number);});
     }
     // 그룹화
     let groupingorder: (number | string)[][] = [
@@ -1664,7 +1645,7 @@ async function explore() {
             resultdata[i][8] = Number(resultdata[i][8]) * 31416 + i;
           }
         }
-        resultdata.sort((a, b) => { return (a[8] as number) - (b[8] as number); });
+        resultdata.sort((a, b) => {return (a[8] as number) - (b[8] as number);});
       }
     }
     // 정렬 및 그룹화 완료
@@ -1832,10 +1813,10 @@ async function fix() {
 
     logsheetdata = logsheetdata.filter((row) => selectedloglist.indexOf(row) === -1);
     logsheetrange.values = logsheetdata.concat(Array(selectedloglist.length).fill(Array(18).fill("")));
-    logsheetrange.getColumn(17).control = { type: Excel.CellControlType.empty };
+    logsheetrange.getColumn(17).control = {type: Excel.CellControlType.empty};
 
     const logsheetnewrange = context.workbook.worksheets.getItem("로그").getRange("A1:R" + logsheetdata.length);
-    logsheetnewrange.getColumn(17).control = { type: Excel.CellControlType.checkbox };
+    logsheetnewrange.getColumn(17).control = {type: Excel.CellControlType.checkbox};
   });
 }
 

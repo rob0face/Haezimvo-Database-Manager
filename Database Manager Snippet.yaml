@@ -879,7 +879,7 @@ script:
         exchangeratesheetrange.load("values");
 
         const deliversheet = context.workbook.worksheets.getItem("운임");
-        const deliversheetheaderrange = deliversheet.getRange("A1:AW2");
+        const deliversheetheaderrange = deliversheet.getRange("A1:AX2");
         deliversheetheaderrange.load("values");
 
         const locationsheet = context.workbook.worksheets.getItem("위치");
@@ -902,7 +902,8 @@ script:
         // singleitem 구조: [0]운송사, [1]출발 위치, [2]POL, [3]도착 국가, [4]도착 위치, [5]POD,
         // [6]환적유무, [7]환적항1, [8]환적항2, [9]운송 단위, [10]운송 소요일, [11]유효기간 시작, [12]유효기간 종료,
         // [13]20피트 운임, [14]40피트 하이큐브 운임, [15]LCL 운임, [16]20피트 순수운임, [17]40피트 하이큐브 순수운임, [18]LCL 순수운임,
-        // [19]프리타임, [20]USCAN, [21, 22, 23, 24]도착지비용1{항목, 단위, 화폐, 금액} ~ [45, 46, 47, 48]도착지비용7
+        // [19]도착 지역, [20]USCAN,
+        // [21]프리타임, [22, 23, 24, 25]도착지비용1{항목, 단위, 화폐, 금액} ~ [46, 47, 48, 49]도착지비용7
 
         let singledata: (string | number | boolean)[] = [];
 
@@ -983,8 +984,9 @@ script:
             singledata[3] as string,
             singledata[4] as string,
             "20피트 운임", "40피트 하이큐브 운임", "LCL 운임", "20피트 순수운임", "40피트 하이큐브 순수운임", "LCL 순수운임",
+            locationlist[data_podindex][2] as string,
+            ((locationlist[data_podindex][1] as string) === "미국" || (locationlist[data_podindex][1] as string) === "캐나다") ? 1 : 0,
             ((singledata[25] as string) !== "" && (new Date(singledata[27] as string) > new Date())) ? singledata[25] as string : "견적 시 문의",
-            ((locationlist[data_podindex][1] as string) === "미국" || (locationlist[data_podindex][1] as string) === "캐나다") ? 1 : 0
           ];
 
           // 도착지 비용 작성
@@ -992,7 +994,7 @@ script:
           let data_addedsurcharge_20std = 0;
           let data_addedsurcharge_40hc = 0;
           let data_addedsurcharge_lcl = 0;
-          let e = 21;
+          let e = 22;
           for (let ii of [28, 33, 38, 43, 48, 53, 58]) {
             // 운임에 포함할 도착지 비용을 변수에 더하고 0으로 만듦
             if (singledata[ii] as boolean) {
@@ -1163,13 +1165,13 @@ script:
           }
         }
 
-        let deliversheetrange = deliversheet.getRange("A:AW").getUsedRange();
+        let deliversheetrange = deliversheet.getRange("A:AX").getUsedRange();
         deliversheetrange.load("values");
         await context.sync();
 
         // 입력할 데이터가 이미 입력된 데이터보다 많으면 범위를 다시 지정함
         if (deliversheetdata.length > deliversheetrange.values.length) {
-          deliversheetrange = deliversheet.getRange("A1:AW" + (deliversheetdata.length));
+          deliversheetrange = deliversheet.getRange("A1:AX" + (deliversheetdata.length));
           deliversheetrange.load("values");
           await context.sync();
         }
@@ -1177,8 +1179,8 @@ script:
         // 입력할 데이터가 이미 입력된 데이터보다 적으면 빈 행을 추가함
         while (deliversheetdata.length < deliversheetrange.values.length) {
           deliversheetdata.push([
-            // 49개의 빈 요소 추가
-            ...Array(49).fill("")
+            // 50개의 빈 요소 추가
+            ...Array(50).fill("")
           ]);
         }
 
